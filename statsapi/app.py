@@ -5,7 +5,7 @@ from statsapi.api.endpoints import router as endpoint_router
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, HTTPException
 from statsapi.api.models import ChannelType
 import re
 
@@ -24,19 +24,24 @@ app = FastAPI()
 app.openapi = api_schema
 app.include_router(endpoint_router)
 
+
+@app.middleware("https")
 @app.middleware("http")
 async def validate_request(request: Request, call_next):
 
     string = [str(ch.value) for ch in ChannelType]
     exp = re.compile("|".join(string))
-    channels = exp.findall(request.url.query)
+    channels_type = exp.findall(request.url.query)
     path = request.url.components.path
 
-    if path == "/channels" and len(channels) > 1:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content=jsonable_encoder(f"Duplicated channel_type query param: {','.join(channels)}"),
-        )
+    if path == "/channels":
+        if not channels_type and bool(request.query_params):
+            return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                content={"reason": "Requested invalid channel type"})
+
+        elif len(channels_type) > 1:
+            return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                content={"reason": f"Duplicated channel_type query param: {', '.join(channels_type)}"})
 
     response = await call_next(request)
     return response
@@ -46,8 +51,7 @@ async def validate_request(request: Request, call_next):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=jsonable_encoder(exc.errors()),
-    )
+        content=jsonable_encoder(content={"reason": {exc.name}}))
 
 
 if __name__ == "__main__":
