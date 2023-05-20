@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from statsapi.api.models import ChannelType
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 
 class StatsManager:
@@ -16,21 +16,23 @@ class StatsManager:
             print("loaded")
             StatsManager.DATA = pd.read_parquet(full_path, engine='pyarrow')
 
-    def get_channels(self, channel_type: Optional[ChannelType] = None):
+    def get_channels(self, channel_type: Optional[List[ChannelType]] = None):
 
         channels = {"velocity": ["vel1", "vel2"],
-                    "hummidity": ["humm1", "humm2"],
+                    "humidity": ["hum1", "hum2"],
                     "pressure": ["press1", "press2"],
                     "temperature": ["temp1", "temp2"]}
 
-        if channel_type is None:
-            return channels
+        if channel_type is not None:
+            filtered_channels = {}
+            for ch in channel_type:
+                if ch in list(channels.keys()):
+                    filtered_channels[ch] = channels[ch]
+            return filtered_channels
+        return channels
 
-        else:
-            [channels.pop(x) for x in ChannelType if x != channel_type]
-            return channels
 
-    def get_stats(self, channels):
+    def get_stats(self, channels, start_date, end_date):
 
         stats = {"vel1": {"mean": "10.0", "std": "2"},
                  "vel2": {"mean": "10.0", "std": "2"},
