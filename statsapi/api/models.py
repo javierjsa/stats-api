@@ -1,7 +1,11 @@
 from enum import Enum
-from typing import List, Union, Dict
-from pydantic import BaseModel, Field
-
+from typing import List, Union, Dict, Tuple
+from pydantic import BaseModel, Field, validator
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError, HTTPException
+from fastapi.encoders import jsonable_encoder
+from fastapi import status
+from datetime import datetime
 
 class ChannelType(Enum):
     vel = "vel"
@@ -62,3 +66,81 @@ class ChannelStats(BaseModel):
               "temp2": {"mean": 25, "std": 5}
             }
         }
+
+
+class ChannelRequest(BaseModel):
+
+    channel_list: Union[List[ChannelType], None] = []
+
+    @validator('channel_list', pre=True, always=False)
+    def check_channel_list(cls, channel_list):
+
+        channel_list = list(set(channel_list))
+
+        for ch in channel_list:
+            if ch not in [cha.value for cha in ChannelType]:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                    detail={"reason": f"Requested invalid channel type: {ch}"})
+
+        return channel_list
+
+
+class StatsRequest(BaseModel):
+
+    channel_ids: Union[List[str], None] = []
+    date_range: List[Union[str, None]] = [None, None]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "channel_ids": ["vel58.3"],
+                "date_range": ["2019-05-01", "2019-07-01"]
+            }
+        }
+
+    @validator('channel_ids', pre=True, always=False)
+    def check_channel_ids(cls, channel_ids):
+
+        return list(set(channel_ids))
+
+    @validator('date_range', pre=False, always=False)
+    def check_date_range(cls, date_range):
+
+        if len(date_range) > 2:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail={'reason': f'Malformed date range, length larger than two'})
+
+        start_date = date_range[0]
+        try:
+            end_date = date_range[1]
+        except IndexError:
+            end_date = None
+
+        if start_date is None and end_date is None:
+            return start_date, end_date
+
+        if start_date is None and end_date is not None:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail={'reason': f'Cannot provide end_date without start_date'})
+
+        if end_date is not None:
+            try:
+                end_date = datetime.strptime(f"{end_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
+            except ValueError as _:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                    detail={'reason': f'Invalid end_date: {end_date}'})
+        else:
+            end_date = datetime.now()
+
+        try:
+            start_date = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
+        except ValueError as _:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail={'reason': f'Invalid start_date: {start_date}'})
+
+        if start_date > end_date:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail={'reason': f"Start_date {start_date} greater than end_date {end_date}"})
+
+        return start_date, end_date
+

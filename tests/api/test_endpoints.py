@@ -33,17 +33,10 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        response = self.client.get("/channels?channel_type=foo")
-        self.assertEqual(response.json(), {"reason": "Requested invalid channel type"})
-        self.assertEqual(response.status_code, 422)
-
-        response = self.client.get(f"/channels?channel_type=velocity&channel_type=humidity")
-        self.assertEqual(response.json(), {"reason": "Duplicated channel_type query param: vel, hum"})
-        self.assertEqual(response.status_code, 422)
-
-        response = self.client.get(f"/channels?channel_type=velocity&channel_type=velocity")
-        self.assertEqual(response.json(),  {"reason": "Duplicated channel_type query param: vel, vel"})
-        self.assertEqual(response.status_code, 422)
+        response = self.client.post("/channels", json={"channel_list": ["foo"]},
+                                    headers={'Content-Type': 'application/json'})
+        self.assertEqual(response.json(), {'reason': 'Requested invalid channel type: foo'})
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def test_request_one_channel_type(self) -> None:
         """
@@ -51,12 +44,33 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        for ch in ChannelType:
-            expected_json = {ch.value: self.expected_channels[ch.value]}
-            response = self.client.get(f"/channels?channel_type={ch.value}")
-            self.assertEqual(response.status_code, 200)
-            received_json = response.json()
-            self.assertEqual(received_json, expected_json)
+        expected_json = {"vel": self.expected_channels["vel"]}
+        response = self.client.post("/channels", json={"channel_list": [f"vel"]},
+                                    headers={'Content-Type': 'application/json'})
+        self.assertEqual(response.status_code, 200)
+        received_json = response.json()
+        self.assertEqual(received_json, expected_json)
+
+        expected_json = {"std_dtr": self.expected_channels["std_dtr"]}
+        response = self.client.post("/channels", json={"channel_list": [f"std_dtr"]},
+                                    headers={'Content-Type': 'application/json'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        received_json = response.json()
+        self.assertEqual(received_json, expected_json)
+
+    def test_request_duplicated_channel_type(self) -> None:
+        """
+        Include the same channel type in request twice. Data is filtered by validator
+        :return: None
+        """
+
+        expected_json = {"vel": self.expected_channels["vel"]}
+        response = self.client.post("/channels", json={"channel_list": ["vel", "vel"]},
+                                    headers={'Content-Type': 'application/json'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        received_json = response.json()
+        self.assertEqual(received_json, expected_json)
 
     def test_request_all_channel_types(self) -> None:
         """
@@ -64,9 +78,10 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        response = self.client.get(f"/channels")
+        response = self.client.post("/channels", json={}, headers={'Content-Type': 'application/json'})
+
         received_json = response.json()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(received_json, self.expected_channels)
 
     def test_get_stats(self) -> None:
@@ -76,10 +91,12 @@ class TestEndpoints(unittest.TestCase):
         """
 
         channels = ["vel58.3", "std58.3"]
-        response = self.client.get(f"/stats?channel_id={channels[0]}&channel_id={channels[1]}"
-                                   f"&start_date=2019-05-27&end_date=2019-07-27")
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "std58.3"],
+                                                    "date_range": ["2019-05-27", "2019-07-27"]},
+                                    headers={'Content-Type': 'application/json'})
 
-        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         for ch in channels:
             self.assertTrue(ch in list(data.keys()))
@@ -95,8 +112,10 @@ class TestEndpoints(unittest.TestCase):
 
         channels = ["vel58.3", "std58.3"]
 
-        response = self.client.get(f"/stats?channel_id={channels[0]}&channel_id={channels[1]}&start_date=2019-05-27")
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "std58.3"],
+                                                    "date_range": ["2019-05-27"]},
+                                    headers={'Content-Type': 'application/json'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         for ch in channels:
             self.assertTrue(ch in list(data.keys()))
@@ -111,8 +130,8 @@ class TestEndpoints(unittest.TestCase):
         """
 
         channels = ["vel58.3", "std58.3"]
-
-        response = self.client.get(f"/stats?channel_id={channels[0]}&channel_id={channels[1]}")
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "std58.3"]},
+                                    headers={'Content-Type': 'application/json'})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         for ch in channels:
@@ -126,8 +145,11 @@ class TestEndpoints(unittest.TestCase):
         Retrieve stats for all channels within date range
         :return: None
         """
-        response = self.client.get(f"/stats?start_date=2019-05-27&end_date=2019-07-27")
-        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post("/stats", json={"date_range": ["2019-05-27", "2019-07-27"]},
+                                    headers={'Content-Type': 'application/json'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         for ch in self.channel_ids:
             self.assertTrue(ch in list(data.keys()))
@@ -141,8 +163,9 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        response = self.client.get(f"/stats")
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post("/stats", json={},
+                                    headers={'Content-Type': 'application/json'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         for ch in self.channel_ids:
             self.assertTrue(ch in list(data.keys()))
@@ -156,19 +179,65 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        response = self.client.get(f"/stats?channel_id=foo")
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "foo"]},
+                                    headers={'Content-Type': 'application/json'})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.text, '{"detail":"Channel_id foo is not Available"}')
+        self.assertEqual(response.text, '{"reason":"Channel_id foo is not available"}')
 
-    def test_get_stats_wrong_time_range(self) -> None:
+    def test_get_stats_start_date_greater_than_end_date(self) -> None:
         """
         Request stats with date range where start_date > end_date
         :return: None
         """
 
-        expected_text = '{"detail":"Start_date 2019-07-27 00:00:00 greater than end_date 2019-05-27 00:00:00"}'
-        response = self.client.get(f"/stats?start_date=2019-07-27&end_date=2019-05-27")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        expected_text = '{"reason":"Start_date 2019-07-27 00:00:00 greater than end_date 2019-05-27 00:00:00"}'
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "std58.3"],
+                                                    "date_range": ["2019-07-27", "2019-05-27"]},
+                                    headers={'Content-Type': 'application/json'})
+
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(response.text, expected_text)
+
+    def test_get_stats_malformed_date_range(self) -> None:
+        """
+        Request stats with date range including more than two date strings
+        :return: None
+        """
+
+        expected_text = '{"reason":"Malformed date range, length larger than two"}'
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "std58.3"],
+                                                    "date_range": ["2019-07-27", "2019-05-27", "2019-06-01"]},
+                                    headers={'Content-Type': 'application/json'})
+
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(response.text, expected_text)
+
+    def test_get_stats_malformed_start_date(self) -> None:
+        """
+        Request stats with date range including more than two date strings
+        :return: None
+        """
+
+        expected_text = '{"reason":"Invalid start_date: 2019-07"}'
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "std58.3"],
+                                                    "date_range": ["2019-07", "2019-05-27"]},
+                                    headers={'Content-Type': 'application/json'})
+
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(response.text, expected_text)
+
+    def test_get_stats_malformed_end_date(self) -> None:
+        """
+        Request stats with date range including more than two date strings
+        :return: None
+        """
+
+        expected_text = '{"reason":"Invalid end_date: 2019-07"}'
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "std58.3"],
+                                                    "date_range": ["2019-07-01", "2019-07"]},
+                                    headers={'Content-Type': 'application/json'})
+
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertEqual(response.text, expected_text)
 
     def test_get_stats_no_data(self) -> None:
@@ -177,7 +246,9 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        response = self.client.get(f"/stats?start_date=1900-05-27&end_date=1900-07-27")
+        response = self.client.post("/stats", json={"channel_ids": ["vel58.3", "std58.3"],
+                                                    "date_range": ["1900-05-27", "1900-05-27"]},
+                                    headers={'Content-Type': 'application/json'})
         data = response.json()
         for ch, stats in data.items():
             self.assertTrue(ch in self.channel_ids)

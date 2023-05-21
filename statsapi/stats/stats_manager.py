@@ -44,17 +44,17 @@ class StatsManager:
         return sorted_channels
 
     @staticmethod
-    def get_channels(channel_type: ChannelType) -> Dict[ChannelType, Any]:
+    def get_channels(channel_type: List[ChannelType]) -> Dict[ChannelType, Any]:
         """
         Retrieve channels belonging to a certain channel type
         :param channel_type: enumerated channel type
         :return: Dictionary of lists with channels sorted by type
         """
 
-        if channel_type is None:
+        if not channel_type:
             return StatsManager.SORTED_CHANNELS
 
-        return {channel_type.name: StatsManager.SORTED_CHANNELS[channel_type.value]}
+        return {ch.name: StatsManager.SORTED_CHANNELS[ch.value] for ch in channel_type}
 
     def get_stats(self, channel_ids: Union[List[str], None] = None, start_date: str = None, end_date: str = None):
         """
@@ -97,11 +97,14 @@ class StatsManager:
         :return: tuple of datetime object or tuple of None values.
         """
 
+        if isinstance(start_date, datetime)  and isinstance(end_date, datetime):
+            return start_date, end_date
+
         if start_date is None and end_date is None:
             return None, None
 
         if start_date is None and end_date is not None:
-            raise StatsManagerException(400, "Null start_date is not allowed when end_date is provided")
+            raise StatsManagerException(400, f'Cannot provide end_date without start_date')
 
         try:
             start_date = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
@@ -170,7 +173,7 @@ class StatsManager:
 
         available_cols = list(cls.DATA.columns)
 
-        if channel_ids is None:
+        if not channel_ids:
             return available_cols
 
         filtered_channels_ids = []
@@ -179,6 +182,6 @@ class StatsManager:
             if ch in available_cols:
                 filtered_channels_ids.append(ch)
             else:
-                raise StatsManagerException(404, f"Channel_id {ch} is not Available")
+                raise StatsManagerException(404, f"Channel_id {ch} is not available")
 
         return filtered_channels_ids
