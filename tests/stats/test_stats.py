@@ -1,8 +1,9 @@
 import datetime
 import unittest
-from unittest.mock import Mock,patch
+from unittest.mock import patch
 from statsapi.stats.stats_manager import StatsManager
 from statsapi.stats.utils import StatsManagerException
+
 
 class TestStats(unittest.TestCase):
 
@@ -54,5 +55,3 @@ class TestStats(unittest.TestCase):
             _, _ = self.manager.validate_dates(start_date="2019-07-01", end_date="2019-05-01")
         with self.assertRaises(StatsManagerException):
             _, _ = self.manager.validate_dates(start_date="20-07-01", end_date="20-05-01")
-
-

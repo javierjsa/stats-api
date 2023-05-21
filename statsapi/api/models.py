@@ -3,7 +3,7 @@ from typing import List, Union, Dict
 from pydantic import BaseModel, Field
 
 
-class ChannelType(str, Enum):
+class ChannelType(Enum):
     vel = "vel"
     std = "std"
     std_dtr = "std_dtr"
@@ -12,6 +12,7 @@ class ChannelType(str, Enum):
     press = "press"
     dir = "dir"
     sdir = "sdir"
+
 
 class Channels(BaseModel):
 
