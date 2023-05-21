@@ -1,8 +1,7 @@
-from fastapi import Query, status
+from fastapi import Query
 from typing_extensions import Annotated
-from typing import List, Optional, Union, FrozenSet
-from datetime import date
-from fastapi.exceptions import RequestValidationError, HTTPException
+from typing import FrozenSet
+from fastapi.exceptions import HTTPException
 from statsapi.api.models import *
 from statsapi.stats.stats_manager import StatsManager
 from statsapi.stats.utils import StatsManagerException
@@ -20,7 +19,7 @@ def get_channels(channel_type: Annotated[Union[ChannelType, None], Query()] = No
         raise HTTPException(status_code=503, detail=f"Unexpected error: {str(error)}")
 
 
-def get_stats(channel_id: Annotated[Union[List, None], Query()] = None,
+def get_stats(channel_id: Annotated[Union[FrozenSet[str], None], Query()] = None,
               start_date: Annotated[Union[str, None], Query()] = None,
               end_date: Annotated[Union[str, None], Query()] = None):
 

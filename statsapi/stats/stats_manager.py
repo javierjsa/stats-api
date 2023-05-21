@@ -43,17 +43,18 @@ class StatsManager:
             sorted_channels[ch.name] = list(data.columns)
         return sorted_channels
 
-    def get_channels(self, channel_type: ChannelType) -> Dict[ChannelType, Any]:
+    @staticmethod
+    def get_channels(channel_type: ChannelType) -> Dict[ChannelType, Any]:
         """
         Retrieve channels belonging to a certain channel type
         :param channel_type: enumerated channel type
-        :return: Dictionary of lists with channels sorte by type
+        :return: Dictionary of lists with channels sorted by type
         """
 
         if channel_type is None:
             return StatsManager.SORTED_CHANNELS
 
-        return {channel_type: StatsManager.SORTED_CHANNELS[channel_type]}
+        return {channel_type.name: StatsManager.SORTED_CHANNELS[channel_type.value]}
 
     def get_stats(self, channel_ids: Union[List[str], None] = None, start_date: str = None, end_date: str = None):
         """
@@ -82,7 +83,8 @@ class StatsManager:
         stats = stats.to_dict('index')
         return stats
 
-    def validate_dates(self, start_date: str = None,
+    @staticmethod
+    def validate_dates(start_date: str = None,
                        end_date: str = None) -> Union[Tuple[datetime, datetime], Tuple[None, None]]:
         """
         Convert date strings to datetime objects. Dates are validated:

@@ -1,13 +1,14 @@
 import uvicorn
+import re
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from statsapi.api.endpoints import router as endpoint_router
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError, HTTPException
+from fastapi.exceptions import RequestValidationError
 from statsapi.api.models import ChannelType
-import re
+
 
 def api_schema():
     openapi_schema = get_openapi(
@@ -51,7 +52,7 @@ async def validate_request(request: Request, call_next):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=jsonable_encoder(content={"reason": {exc.name}}))
+        content=jsonable_encoder({"reason": {exc.json()}}))
 
 
 if __name__ == "__main__":

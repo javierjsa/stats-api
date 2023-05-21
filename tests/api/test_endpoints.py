@@ -42,7 +42,7 @@ class TestEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
 
         response = self.client.get(f"/channels?channel_type=velocity&channel_type=velocity")
-        self.assertEqual(response.json(),  {"reason":"Duplicated channel_type query param: vel, vel"})
+        self.assertEqual(response.json(),  {"reason": "Duplicated channel_type query param: vel, vel"})
         self.assertEqual(response.status_code, 422)
 
     def test_request_one_channel_type(self) -> None:
@@ -53,7 +53,7 @@ class TestEndpoints(unittest.TestCase):
 
         for ch in ChannelType:
             expected_json = {ch.value: self.expected_channels[ch.value]}
-            response = self.client.get(f"/channels?channel_type={ch}")
+            response = self.client.get(f"/channels?channel_type={ch.value}")
             self.assertEqual(response.status_code, 200)
             received_json = response.json()
             self.assertEqual(received_json, expected_json)
@@ -183,4 +183,3 @@ class TestEndpoints(unittest.TestCase):
             self.assertTrue(ch in self.channel_ids)
             self.assertIsNone(stats['mean'])
             self.assertIsNone(stats['std'])
-
