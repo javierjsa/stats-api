@@ -29,7 +29,7 @@ Fastapi application consisting of two endpoints:
       docker pull javierjsa/statsapi:latest
 
 - ### Run image:</br>
-      docker run -t --rm -p 8000:8000 statsapi:latest
+      docker run -t --rm -p 8000:8000 javierjsa/statsapi:latest
  
 - ### Access documentation:</br>
       http://0.0.0.0:8000/docs
