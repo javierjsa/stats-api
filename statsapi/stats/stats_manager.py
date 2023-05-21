@@ -84,10 +84,10 @@ class StatsManager:
         return stats
 
     @staticmethod
-    def validate_dates(start_date: str = None,
-                       end_date: str = None) -> Union[Tuple[datetime, datetime], Tuple[None, None]]:
+    def validate_dates(start_date: Union[str, datetime] = None,
+                       end_date: Union[str, datetime] = None) -> Union[Tuple[datetime, datetime], Tuple[None, None]]:
         """
-        Convert date strings to datetime objects. Dates are validated:
+        Convert date strings to datetime objects. Dates are validated in case date strings are received.
         - If no date range provided, None is returned
         - If start date provided, but no end date, end date is now.
         - If validation fails, such as start_date greater than end_date, custom exception is raised

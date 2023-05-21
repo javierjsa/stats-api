@@ -1,7 +1,6 @@
 import unittest
 from fastapi import status
 from fastapi.testclient import TestClient
-from statsapi.api.models import ChannelType
 from statsapi.app import app
 
 
