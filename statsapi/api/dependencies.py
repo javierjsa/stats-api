@@ -1,21 +1,40 @@
-from fastapi import APIRouter, Depends
 from fastapi import Query, status
 from typing_extensions import Annotated
 from typing import List, Optional, Union, FrozenSet
-from datetime import datetime
-from .models import *
+from datetime import date
+from fastapi.exceptions import RequestValidationError, HTTPException
+from statsapi.api.models import *
 from statsapi.stats.stats_manager import StatsManager
+from statsapi.stats.utils import StatsManagerException
 
 
 def get_channels(channel_type: Annotated[Union[ChannelType, None], Query()] = None):
 
     stats_manager = StatsManager()
-    return Channels(**stats_manager.get_channels(channel_type))
+    try:
+        channels = stats_manager.get_channels(channel_type)
+        return Channels(**channels)
+    except StatsManagerException as error:
+        raise HTTPException(status_code=error.code, detail=str(error))
+    except Exception as error:
+        raise HTTPException(status_code=503, detail=f"Unexpected error: {str(error)}")
 
 
-def get_stats(channel: Annotated[Union[FrozenSet[str], None], Query()] = None,
-                    start_date: Annotated[Union[datetime, None], Query()] = None,
-                    end_date: Annotated[Union[datetime, None], Query()] = None):
+def get_stats(channel_id: Annotated[Union[List, None], Query()] = None,
+              start_date: Annotated[Union[str, None], Query()] = None,
+              end_date: Annotated[Union[str, None], Query()] = None):
 
     stats_manager = StatsManager()
-    return stats_manager.get_stats(channel, start_date, end_date)
+    try:
+        stats = stats_manager.get_stats(channel_id, start_date, end_date)
+    except StatsManagerException as error:
+        raise HTTPException(status_code=error.code, detail=str(error))
+    except Exception as error:
+        raise HTTPException(status_code=503, detail=f"Unexpected error: {str(error)}")
+
+    for key, val in stats.items():
+        stats[key] = Stats(**val)
+
+    channel_stats = ChannelStats()
+    channel_stats.data = stats
+    return stats

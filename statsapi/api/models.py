@@ -4,26 +4,33 @@ from pydantic import BaseModel, Field
 
 
 class ChannelType(str, Enum):
-    velocity = "velocity"
-    temperature = "temperature"
-    humidity = "humidity"
-    pressure = "pressure"
-
+    vel = "vel"
+    std = "std"
+    std_dtr = "std_dtr"
+    temp = "temp"
+    hum = "hum"
+    press = "press"
+    dir = "dir"
+    sdir = "sdir"
 
 class Channels(BaseModel):
 
-    velocity: Union[List[str], None] = Field(default=None, title="Channel ids of type velocity")
-    temperature: Union[List[str], None] =  Field(default=None, title="Channel ids of type temperature")
-    humidity: Union[List[str], None] = Field(default=None, title="Channel ids of type humidity")
-    pressure: Union[List[str], None] = Field(default=None, title="Channel ids of type pressure")
+    vel: Union[List[str], None] = Field(default=None, title="Channel ids of type vel")
+    std: Union[List[str], None] = Field(default=None, title="Channel ids of type std")
+    std_dtr: Union[List[str], None] = Field(default=None, title="Channel ids of type std_dtr")
+    temp: Union[List[str], None] = Field(default=None, title="Channel ids of type temp")
+    hum: Union[List[str], None] = Field(default=None, title="Channel ids of type hum")
+    press: Union[List[str], None] = Field(default=None, title="Channel ids of type press")
+    dir: Union[List[str], None] = Field(default=None, title="Channel ids of type dir")
+    sdir: Union[List[str], None] = Field(default=None, title="Channel ids of type sdir")
 
     class Config:
         schema_extra = {
             "example": {
-                "velocity": ["vel1", "vel2"],
-                "temperature": ["temp1", "temp2"],
-                "humidity": ["hum1", "hum2"],
-                "pressure": ["press1", "press2"]
+                "vel": ["vel1", "vel2"],
+                "temp": ["temp1", "temp2"],
+                "hum": ["hum1", "hum2"],
+                "press": ["press1", "press2"]
             }
         }
 
@@ -50,7 +57,7 @@ class ChannelStats(BaseModel):
         schema_extra = {
             "example": {
               "vel1": {"mean": 10.0, "std": "2.5"},
-              "pre1": {"mean": 1500, "std": "250"},
-              "tem2": {"mean": 25, "std": 5}
+              "press1": {"mean": 1500, "std": "250"},
+              "temp2": {"mean": 25, "std": 5}
             }
         }
