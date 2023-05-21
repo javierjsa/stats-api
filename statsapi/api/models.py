@@ -1,11 +1,10 @@
 from enum import Enum
-from typing import List, Union, Dict, Tuple
+from typing import List, Union
 from pydantic import BaseModel, Field, validator
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError, HTTPException
-from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import HTTPException
 from fastapi import status
 from datetime import datetime
+
 
 class ChannelType(Enum):
     vel = "vel"
@@ -50,20 +49,6 @@ class Stats(BaseModel):
             "example": {
                 "mean": 10.0,
                 "std": 2.5
-            }
-        }
-
-
-class ChannelStats(BaseModel):
-
-    data: Dict[str, Union[str, Dict[str, Stats]]] = Field(default=None, title="Nested dictionary of channel stats")
-
-    class Config:
-        schema_extra = {
-            "example": {
-              "vel1": {"mean": 10.0, "std": "2.5"},
-              "press1": {"mean": 1500, "std": "250"},
-              "temp2": {"mean": 25, "std": 5}
             }
         }
 
