@@ -74,8 +74,8 @@ class StatsManager:
         data = self.select_date_range(start_date, end_date)
         data = data[channel_ids]
 
-        mean = data.mean()
-        std = data.std()
+        mean = data.mean(skipna=True, numeric_only=True)
+        std = data.std(skipna=True, numeric_only=True)
 
         stats = pd.concat([mean, std], axis=1)
         stats.rename(columns={0: "mean", 1: "std"}, inplace=True)
