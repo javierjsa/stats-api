@@ -18,6 +18,9 @@ class ChannelType(Enum):
 
 
 class Channels(BaseModel):
+    """
+    Response model for available channel identifier requests
+    """
 
     vel: Union[List[str], None] = Field(default=None, title="Channel ids of type vel")
     std: Union[List[str], None] = Field(default=None, title="Channel ids of type std")
@@ -40,6 +43,9 @@ class Channels(BaseModel):
 
 
 class Stats(BaseModel):
+    """
+    Response model for channel stats requests
+    """
 
     mean: Union[float, None] = Field(default=None, title="channel mean")
     std: Union[float, None] = Field(default=None, title="channel standard deviation")
@@ -54,8 +60,18 @@ class Stats(BaseModel):
 
 
 class ChannelRequest(BaseModel):
+    """
+    Request model for available channel identifiers
+    """
 
-    channel_list: Union[List[ChannelType], None] = []
+    channel_list: Union[List[ChannelType], None] = Field(default=[], title="List of requested channel types")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "channel_list": ["vel", "temp"]
+            }
+        }
 
     @validator('channel_list', pre=True, always=False)
     def check_channel_list(cls, channel_list):
@@ -71,9 +87,12 @@ class ChannelRequest(BaseModel):
 
 
 class StatsRequest(BaseModel):
+    """
+    Request model for channel stats requests
+    """
 
-    channel_ids: Union[List[str], None] = []
-    date_range: List[Union[str, None]] = [None, None]
+    channel_ids: Union[List[str], None] = Field(default=[], title="List of channel identifiers")
+    date_range: List[Union[str, None]] = Field(default=[None, None], title="Date range string with forma YYYY-m-d")
 
     class Config:
         schema_extra = {
