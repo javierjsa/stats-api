@@ -26,7 +26,7 @@ Fastapi application consisting of two endpoints:
 ## <span style="color:green">Docker image
 
 - ### Download image:</br>
-      docker pull javierjsa/statsapi:latest</br>
+      docker pull javierjsa/statsapi:latest
 
 - ### Run image:</br>
       docker run -t --rm -p 8000:8000 statsapi:latest
