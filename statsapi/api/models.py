@@ -1,11 +1,10 @@
 from enum import Enum
-from typing import List, Union, Dict, Tuple
+from typing import List, Union, Dict
 from pydantic import BaseModel, Field, validator
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError, HTTPException
-from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import HTTPException
 from fastapi import status
 from datetime import datetime
+
 
 class ChannelType(Enum):
     vel = "vel"
@@ -70,19 +69,26 @@ class ChannelStats(BaseModel):
 
 class ChannelRequest(BaseModel):
 
-    channel_list: Union[List[ChannelType], None] = []
+    channel_type: Union[List[ChannelType], None] = []
 
-    @validator('channel_list', pre=True, always=False)
-    def check_channel_list(cls, channel_list):
+    class Config:
+        schema_extra = {
+            "example": {
+              "channel_type": ["vel", "temp"]
+            }
+        }
 
-        channel_list = list(set(channel_list))
+    @validator('channel_type', pre=True, always=False)
+    def check_channel_type(cls, channel_type):
 
-        for ch in channel_list:
+        channel_type = list(set(channel_type))
+
+        for ch in channel_type:
             if ch not in [cha.value for cha in ChannelType]:
                 raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                     detail={"reason": f"Requested invalid channel type: {ch}"})
 
-        return channel_list
+        return channel_type
 
 
 class StatsRequest(BaseModel):

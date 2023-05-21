@@ -97,7 +97,7 @@ class StatsManager:
         :return: tuple of datetime object or tuple of None values.
         """
 
-        if isinstance(start_date, datetime)  and isinstance(end_date, datetime):
+        if isinstance(start_date, datetime) and isinstance(end_date, datetime):
             return start_date, end_date
 
         if start_date is None and end_date is None:

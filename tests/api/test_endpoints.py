@@ -1,7 +1,6 @@
 import unittest
 from fastapi import status
 from fastapi.testclient import TestClient
-from statsapi.api.models import ChannelType
 from statsapi.app import app
 
 
@@ -95,7 +94,6 @@ class TestEndpoints(unittest.TestCase):
                                                     "date_range": ["2019-05-27", "2019-07-27"]},
                                     headers={'Content-Type': 'application/json'})
 
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         for ch in channels:
@@ -173,7 +171,7 @@ class TestEndpoints(unittest.TestCase):
             for val in ["mean", "std"]:
                 self.assertTrue(val in list(stats.keys()))
 
-    def test_get_stat_nonexistent_channel(self) -> None:
+    def test_get_stat_non_existent_channel(self) -> None:
         """
         Request stats for non-existent channel
         :return: None
