@@ -12,6 +12,7 @@ pipeline {
             steps {
                 echo "Building.."
                 sh '''
+                echo $PWD
                 ls -la
                 pip install -r requirements.txt
                 pip install -r ./test/requirements.txt
