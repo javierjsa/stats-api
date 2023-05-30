@@ -23,7 +23,7 @@ pipeline {
             steps {
                 echo "Testing.."
                 sh '''
-                export PYTHONPATH=$PYTHONPATH:{$PWD}
+                export PYTHONPATH=$PYTHONPATH:$PWD
                 echo $PYTHONPATH
                 cd test
                 python -m unittest discover -s .
