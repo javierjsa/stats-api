@@ -12,8 +12,6 @@ pipeline {
             steps {
                 echo "Building.."
                 sh '''
-                ls -la
-                cd statsapi
                 pip install -r requirements.txt
                 '''
             }
