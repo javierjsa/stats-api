@@ -12,7 +12,9 @@ pipeline {
             steps {
                 echo "Building.."
                 sh '''
-                docker build -t statapi/test:latest .
+                ls -la
+                pip install -r requirements.txt
+                pip install -r ./test/requirements.txt
                 '''
             }
         }
