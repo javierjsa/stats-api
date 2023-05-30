@@ -1,5 +1,5 @@
 # <span style="color:green">Channel stats API
-Fastapi application consisting of two endpoints:
+Fastapi application consisting of two endpoints.
 
 ## <span style="color:green">Endpoints
 
