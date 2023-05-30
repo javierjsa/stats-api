@@ -24,6 +24,7 @@ pipeline {
                 echo "Testing.."
                 sh '''
                 export PYTHONPATH=$PYTHONPATH:{$PWD}
+                echo $PYTHONPATH
                 cd test
                 python -m unittest discover -s .
                 '''
