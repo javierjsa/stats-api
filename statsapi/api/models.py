@@ -1,12 +1,27 @@
+"""
+API endpoint models that facilitate handling and validation of request and response data
+"""
 from enum import Enum
 from typing import List, Union
 from pydantic import BaseModel, Field, validator
+from datetime import datetime
 from fastapi.exceptions import HTTPException
 from fastapi import status
-from datetime import datetime
 
+
+
+class FileId(BaseModel):
+    """
+    File model with fields id and path
+    """
+
+    id: str
+    path: str
 
 class ChannelType(Enum):
+    """
+    Available channels/columns in parque file
+    """
     vel = "vel"
     std = "std"
     std_dtr = "std_dtr"
@@ -64,12 +79,15 @@ class ChannelRequest(BaseModel):
     Request model for available channel identifiers
     """
 
-    channel_list: Union[List[ChannelType], None] = Field(default=[], title="List of requested channel types")
+    file_id: str
+    channel_list: Union[List[ChannelType], None] = Field(default=[],
+                                                         title="List of requested channel types")
 
     class Config:
         schema_extra = {
             "example": {
-                "channel_list": ["vel", "temp"]
+                "file_id": "9c750d0955a60f00557b488b713f9320",
+                "channel_list": ["vel56.8", "std56.8"]
             }
         }
 
@@ -91,12 +109,14 @@ class StatsRequest(BaseModel):
     Request model for channel stats requests
     """
 
+    file_id: str = Field(title="File identifier")
     channel_ids: Union[List[str], None] = Field(default=[], title="List of channel identifiers")
     date_range: List[Union[str, None]] = Field(default=[None, None], title="Date range string with forma YYYY-m-d")
 
     class Config:
         schema_extra = {
             "example": {
+                "file_id": "9c750d0955a60f00557b488b713f9320",
                 "channel_ids": ["vel58.3"],
                 "date_range": ["2019-05-01", "2019-07-01"]
             }

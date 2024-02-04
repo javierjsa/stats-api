@@ -6,6 +6,8 @@ services:
       - 80:8000
     env_file:
       - .env
+    volumes:
+      - ./statsapi:/root/statsapi/statsapi
     depends_on:
       - minio
   minio:
@@ -13,7 +15,6 @@ services:
     ports:
       - 9000:9000
       - 9001:9001
-      - 443:443
     volumes:
       - ./minio-data:/data
     env_file:
@@ -28,11 +29,11 @@ services:
       - .env
     entrypoint: >
       /bin/sh -c " sleep 10;
-      /usr/bin/mc alias set myminio http://minio:9000 minio minio123;
-      /usr/bin/mc admin user add myminio  user2  'dfvfv-secret-key';
-      /usr/bin/mc admin user svcacct add --access-key 'serv-account-2-user2' --secret-key 'secret-key-user2' myminio user2;
-      /usr/bin/mc mb --ignore-existing myminio/somebucketname;
-      /usr/bin/mc anonymous set public myminio/somebucketname;
+      /usr/bin/mc alias set minio-local http://minio:9000 minio minio123;
+      /usr/bin/mc admin user add minio-local  apiuser  'serv-account-apiuser';
+      /usr/bin/mc admin user svcacct add --access-key 'serv-account-apiuser' --secret-key 'secret-key-apiuser' minio-local apiuser;
+      /usr/bin/mc admin policy attach minio-local readwrite --user apiuser;
+      /usr/bin/mc mb --ignore-existing minio-local/databucket;
       exit 0;
       "
 volumes:
