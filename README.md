@@ -1,3 +1,4 @@
+[![Python application](https://github.com/javierjsa/stats-api/actions/workflows/python-app.yml/badge.svg)](https://github.com/javierjsa/stats-api/actions/workflows/python-app.yml)
 [![Pylint](https://github.com/javierjsa/stats-api/actions/workflows/pylint.yml/badge.svg)](https://github.com/javierjsa/stats-api/actions/workflows/pylint.yml)
 # <span style="color:green">Channel stats API
 Fastapi application consisting of two endpoints.
