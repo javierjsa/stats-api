@@ -2,6 +2,9 @@ from enum import Enum
 
 
 class ChannelTypeRegexp(Enum):
+    """
+    Regular expression to match available channels types in a parquet file
+    """
 
     vel = "^vel[0-9]*.[0-9]*"
     std = "^std[0-9]*.[0-9]*$(?<!detrend)"
@@ -18,6 +21,9 @@ class ChannelTypeRegexp(Enum):
 
 
 class StatsManagerException(Exception):
+    """
+    Custom exception class
+    """
 
     def __init__(self, code, message):
 

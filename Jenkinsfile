@@ -1,7 +1,7 @@
 pipeline {
     agent {
         node {
-            label 'docker-agent-python'
+            label 'docker-statsapi'
             }
       }
     triggers {
@@ -12,7 +12,10 @@ pipeline {
             steps {
                 echo "Building.."
                 sh '''
-                docker build -t statapi/test:latest .
+                echo $PWD
+                ls -la
+                pip install -r requirements.txt
+                pip install -r ./test/requirements.txt
                 '''
             }
         }
@@ -20,6 +23,8 @@ pipeline {
             steps {
                 echo "Testing.."
                 sh '''
+                export PYTHONPATH=$PYTHONPATH:$PWD
+                echo $PYTHONPATH
                 cd test
                 python -m unittest discover -s .
                 '''

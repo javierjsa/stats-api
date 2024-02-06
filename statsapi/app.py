@@ -1,14 +1,12 @@
-import uvicorn
-import re
-from fastapi import FastAPI
 from typing import Union
+import uvicorn
+from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from statsapi.api.endpoints import router as endpoint_router
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError, HTTPException
-from statsapi.api.models import ChannelType
+from statsapi.api.endpoints import router as endpoint_router
 
 
 def api_schema():

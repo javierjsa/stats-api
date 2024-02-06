@@ -1,77 +1,129 @@
 import os
-import pandas as pd
-import numpy as np
-from statsapi.api.models import ChannelType
+from hashlib import md5
+from io import BytesIO
 from typing import Union, List, Dict, Any, Tuple
 from datetime import datetime
+import pandas as pd
+import numpy as np
+import boto3
+from statsapi.api.models import ChannelType
 from statsapi.stats.utils import ChannelTypeRegexp, StatsManagerException
 
 
 class StatsManager:
+    """
+    StatsManager contains the logic requires to store, load and process parquet files
+    """
 
-    DATA = None
-    SORTED_CHANNELS = None
 
     def __init__(self):
 
-        if StatsManager.DATA is None:
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            full_path = os.path.join(base_dir, "resources/11.parquet")
-            self.load_data(full_path)
+        self.session = boto3.Session(aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+                                     aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+                                     aws_session_token=None)
 
-    @classmethod
-    def load_data(cls, full_path: os.path) -> None:
-        """
-        Load available data from file and sort channels per type. Store in class variable
 
-        :param full_path: full parquet file path
-        :return: None
+    def load_data(self, file_id: str) -> pd.DataFrame:
         """
-        StatsManager.DATA = pd.read_parquet(full_path, engine='pyarrow')
-        StatsManager.SORTED_CHANNELS = cls.sort_channels()
+        Load available data from storae backend and sort channels per type. Store in class variable
 
-    @classmethod
-    def sort_channels(cls) -> Dict[str, List[Any]]:
+        :param file_id: file identifier
+        :type file_id: str
+        :return: requested data as a dataframe
+        :rtype: pd.Daraframe
         """
-        Sort available channels per channel type, executed when class is instantiated for the first time
-        :return: None
+
+        buffer = BytesIO()
+        resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
+        data = resource.Object(os.environ.get("BUCKET"),f"{file_id}.parquet")
+        data.download_fileobj(buffer)
+        df = pd.read_parquet(buffer, engine='pyarrow')
+        return df
+
+
+    def store_data(self, data: BytesIO) -> str:
+        """
+        Save data to storage backend
+
+        :param data: parquet data to be stored
+        :type data: BytesIO
+        :return: file hash as a file identifier
+        :rtype: str
+        """
+
+        md5sum = md5(data.getbuffer())
+        file_id = md5sum.hexdigest()
+        resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
+        bucket= resource.Bucket(os.environ.get("BUCKET"))
+        data.seek(0)
+        bucket.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
+                          Key=f"{file_id}.parquet", ContentType='application/x-parquet')
+
+        return file_id
+
+    def sort_channels(self, data: pd.DataFrame) -> Dict[str, List[Any]]:
+        """
+        Sort available channels per channel type
+
+        :param data: Dataframe to extract channels from
+        :type data: pd.DataFrame
+        :return: channels sorted by ChannelType
+        :rtype: Dict[str, List[Any]]
         """
 
         sorted_channels = {}
         for ch in ChannelTypeRegexp:
-            data = cls.DATA.filter(regex=f"{ch.value}")
-            sorted_channels[ch.name] = list(data.columns)
+            filtered_data = data.filter(regex=f"{ch.value}")
+            sorted_channels[ch.name] = list(filtered_data.columns)
         return sorted_channels
 
-    @staticmethod
-    def get_channels(channel_type: List[ChannelType]) -> Dict[ChannelType, Any]:
+
+    def get_channels(self, file_id: str, channel_type: List[ChannelType]) -> Dict[ChannelType, Any]:
         """
         Retrieve channels belonging to a certain channel type
-        :param channel_type: enumerated channel type
-        :return: Dictionary of lists with channels sorted by type
+
+        :param file_id: File identifier
+        :type file_id: str
+        :param channel_type: _description_
+        :type channel_type: List[ChannelType]
+        :return: Channels sorted by type
+        :rtype: Dict[ChannelType, Any]
         """
 
+        data = self.load_data(file_id)
+        sorted_channels = self.sort_channels(data)
+
         if not channel_type:
-            return StatsManager.SORTED_CHANNELS
+            return sorted_channels
 
-        return {ch.name: StatsManager.SORTED_CHANNELS[ch.value] for ch in channel_type}
+        return {ch.name: sorted_channels.get(ch.name, []) for ch in channel_type}
 
-    def get_stats(self, channel_ids: Union[List[str], None] = None, start_date: str = None, end_date: str = None):
+
+    def get_stats(self, file_id: str,
+                  channel_ids: Union[List[str], None] = None,
+                  start_date: str = None, end_date: str = None) -> Dict[str, float]:
         """
         Compute mean and standard deviation for a list of channel ids within date range.
         - If no channel identifiers are provided, all channels are used.
         - If no date range provided, full time series is used.
         - If start date provided, but no end date, end date is now.
 
-        :param channel_ids: list of channel identifiers, may be empty
-        :param start_date: start date int string format YYYY-m-d, may be empty
-        :param end_date: end date int string format YYYY-m-d, may be empty
-        :return:
+        :param file_id: File identifier
+        :type file_id: str
+        :param channel_ids: List of channel identifiers, defaults to None
+        :type channel_ids: Union[List[str], None], optional
+        :param start_date: Start date in string format YYYY-m-d, defaults to None
+        :type start_date: str, optional
+        :param end_date: end date int string format YYYY-m-d, defaults to None
+        :type end_date: str, optional
+        :return: mean and standard deviation for requested channels.
+        :rtype: Dict[str, float]
         """
 
-        channel_ids = self.validate_column_names(channel_ids)
+        data = self.load_data(file_id)
+        channel_ids = self.validate_column_names(data, channel_ids)
 
-        data = self.select_date_range(start_date, end_date)
+        data = self.select_date_range(data, start_date, end_date)
         data = data[channel_ids]
 
         mean = data.mean(skipna=True, numeric_only=True)
@@ -92,9 +144,15 @@ class StatsManager:
         - If start date provided, but no end date, end date is now.
         - If validation fails, such as start_date greater than end_date, custom exception is raised
 
-        :param start_date: start date string, may be empty
-        :param end_date:  end date string, may be empty
-        :return: tuple of datetime object or tuple of None values.
+        :param start_date: Start date in string format YYYY-m-d, defaults to None
+        :type start_date: Union[str, datetime], optional
+        :param end_date: End date in string format YYYY-m-d, defaults to None
+        :type end_date: Union[str, datetime], optional
+        :raises StatsManagerException: Provided end data with no start date
+        :raises StatsManagerException: date strings do not follow specified format
+        :raises StatsManagerException: start date is greater than end date
+        :return: parsed start and end dates
+        :rtype: Union[Tuple[datetime, datetime], Tuple[None, None]]
         """
 
         if isinstance(start_date, datetime)  and isinstance(end_date, datetime):
@@ -104,7 +162,7 @@ class StatsManager:
             return None, None
 
         if start_date is None and end_date is not None:
-            raise StatsManagerException(400, f'Cannot provide end_date without start_date')
+            raise StatsManagerException(400, 'Cannot provide end_date without start_date')
 
         try:
             start_date = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
@@ -124,54 +182,73 @@ class StatsManager:
 
         return start_date, end_date
 
-    def compute_mean(self, channel_id: str) -> pd.Series:
+    def compute_mean(self, data: pd.DataFrame, channel_id: str) -> pd.Series:
         """
         Compute mean of channel identifier
 
+        :param data: parquet data to be processed
+        :type data: pd.DataFrame
         :param channel_id: channel identifier
-        :return: pandas series with mean value
+        :type channel_id: str
+        :return: computed mean
+        :rtype: pd.Series
         """
 
-        mean = self.DATA[channel_id].mean()
+        mean = data[channel_id].mean()
         return mean
 
-    def compute_std(self, channel_id: str) -> pd.Series:
+    def compute_std(self, data: pd.DataFrame, channel_id: str) -> pd.Series:
         """
         Compute standard deviation of channel identifier
 
+        :param data: parquet data to be processed
+        :type data: pd.DataFrame
         :param channel_id: channel identifier
-        :return: pandas series with standard deviation value
+        :type channel_id: str
+        :return: computed standar deviation
+        :rtype: pd.Series
         """
 
-        std = self.DATA[channel_id].std()
+        std = data[channel_id].std()
         return std
 
-    def select_date_range(self, start_date: datetime = None, end_date: datetime = None) -> pd.DataFrame:
+    def select_date_range(self, data: pd.DataFrame,
+                          start_date: datetime = None, end_date: datetime = None) -> pd.DataFrame:
         """
         Select date range from available data
-        :param start_date: start date datetime object
-        :param end_date: end_date datetime object
-        :return: pandas dataframe with selected data
+
+        :param data: source parquet to extract data from
+        :type data: pd.DataFrame
+        :param start_date: start date, defaults to None
+        :type start_date: datetime, optional
+        :param end_date: end date, defaults to None
+        :type end_date: datetime, optional
+        :return: selected data
+        :rtype: pd.DataFrame
         """
 
         start_date, end_date = self.validate_dates(start_date, end_date)
 
         if start_date is not None and end_date is not None:
-            return self.DATA[(self.DATA.index >= start_date) & (self.DATA.index <= end_date)]
+            return data[(data.index >= start_date) & (data.index <= end_date)]
 
-        return self.DATA
+        return data
 
-    @classmethod
-    def validate_column_names(cls, channel_ids: List[str] = None) -> List[str]:
+
+    def validate_column_names(self, data: pd.DataFrame, channel_ids: List[str] = None) -> List[str]:
         """
         Check if list of provided channel identifiers is available. If any channel identifier is not available,
         an exception is raised.
 
-        :param channel_ids: list of channel identifiers
-        :return: list of verified channel identifiers
+        :param data: parque data to extract channels from
+        :type data: pd.DataFrame
+        :param channel_ids: list of channel identifiers, defaults to None
+        :type channel_ids: list of available channels per type, optional
+        :raises StatsManagerException: If any of requested channels is not available
+        :rtype: List[str]
         """
 
-        available_cols = list(cls.DATA.columns)
+        available_cols = list(data.columns)
 
         if not channel_ids:
             return available_cols
