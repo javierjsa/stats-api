@@ -1,6 +1,6 @@
-from typing import Dict
+from typing import Dict, Union
 from io import BytesIO
-from typing_extensions import Annotated, Union
+from typing_extensions import Annotated
 from fastapi import APIRouter, status, File
 from fastapi.exceptions import HTTPException
 from statsapi.api.models import (ChannelRequest, Channels,
@@ -69,7 +69,7 @@ async def get_channel_stats(stats_request: Union[StatsRequest, None]) -> Dict[st
                                         end_date=data['date_range'][1])
     except StatsManagerException as error:
         raise HTTPException(status_code=error.code, detail={"reason": str(error)})
-    except Exception as error:
+    except Exception:
         import traceback
         raise HTTPException(status_code=503,
                             detail={"reason": f"Unexpected error: {traceback.format_exc()}"})
@@ -78,6 +78,7 @@ async def get_channel_stats(stats_request: Union[StatsRequest, None]) -> Dict[st
         stats[key] = Stats(**val)
 
     return stats
+
 
 @router.post("/upload", status_code=status.HTTP_200_OK,
              summary="Upload parquet file",
@@ -95,4 +96,3 @@ async def upload_file(file: Annotated[bytes, File()]) -> FileId:
         return FileId(id=file_id, path="/aa")
     except Exception as e:
         return FileId(id="error", path=f"{e}")
-    
