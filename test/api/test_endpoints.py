@@ -9,7 +9,6 @@ from statsapi.app import app
 from statsapi.stats.stats_manager import StatsManager
 
 
-
 class TestEndpoints(unittest.TestCase):
     """
     Test api end-to-end
@@ -63,8 +62,8 @@ class TestEndpoints(unittest.TestCase):
             self.assertEqual(received_json, expected_json)
 
             expected_json = {"std_dtr": self.expected_channels["std_dtr"]}
-            response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320", 
-                                                        "channel_list": ["std_dtr"]},
+            response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320",
+                                                           "channel_list": ["std_dtr"]},
                                         headers={'Content-Type': 'application/json'})
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             received_json = response.json()
@@ -96,7 +95,7 @@ class TestEndpoints(unittest.TestCase):
         with patch.object(StatsManager, 'load_data') as mock_method:
             mock_method.return_value = self.data
             response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320"},
-                                         headers={'Content-Type': 'application/json'})
+                                        headers={'Content-Type': 'application/json'})
 
             received_json = response.json()
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -115,7 +114,6 @@ class TestEndpoints(unittest.TestCase):
                                                         "channel_ids": ["vel58.3", "std58.3"],
                                                         "date_range": ["2019-05-27", "2019-07-27"]},
                                         headers={'Content-Type': 'application/json'})
-
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()
@@ -226,7 +224,7 @@ class TestEndpoints(unittest.TestCase):
         """
 
         expected_text = '{"reason":"Start_date 2019-07-27 00:00:00 greater than end_date 2019-05-27 00:00:00"}'
-        response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320", 
+        response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
                                                     "channel_ids": ["vel58.3", "std58.3"],
                                                     "date_range": ["2019-07-27", "2019-05-27"]},
                                     headers={'Content-Type': 'application/json'})

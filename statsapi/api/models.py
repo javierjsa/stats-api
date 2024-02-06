@@ -9,7 +9,6 @@ from fastapi.exceptions import HTTPException
 from fastapi import status
 
 
-
 class FileId(BaseModel):
     """
     File model with fields id and path
@@ -17,6 +16,7 @@ class FileId(BaseModel):
 
     id: str
     path: str
+
 
 class ChannelType(Enum):
     """
@@ -132,7 +132,7 @@ class StatsRequest(BaseModel):
 
         if len(date_range) > 2:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail={'reason': f'Malformed date range, length larger than two'})
+                                detail={'reason': 'Malformed date range, length larger than two'})
 
         start_date = date_range[0]
         try:
@@ -145,12 +145,12 @@ class StatsRequest(BaseModel):
 
         if start_date is None and end_date is not None:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail={'reason': f'Cannot provide end_date without start_date'})
+                                detail={'reason': 'Cannot provide end_date without start_date'})
 
         if end_date is not None:
             try:
                 end_date = datetime.strptime(f"{end_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
-            except ValueError as _:
+            except ValueError:
                 raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                     detail={'reason': f'Invalid end_date: {end_date}'})
         else:
@@ -158,7 +158,7 @@ class StatsRequest(BaseModel):
 
         try:
             start_date = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
-        except ValueError as _:
+        except ValueError:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail={'reason': f'Invalid start_date: {start_date}'})
 
@@ -167,4 +167,3 @@ class StatsRequest(BaseModel):
                                 detail={'reason': f"Start_date {start_date} greater than end_date {end_date}"})
 
         return start_date, end_date
-

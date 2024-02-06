@@ -15,13 +15,11 @@ class StatsManager:
     StatsManager contains the logic requires to store, load and process parquet files
     """
 
-
     def __init__(self):
 
         self.session = boto3.Session(aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
                                      aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
                                      aws_session_token=None)
-
 
     def load_data(self, file_id: str) -> pd.DataFrame:
         """
@@ -35,11 +33,10 @@ class StatsManager:
 
         buffer = BytesIO()
         resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
-        data = resource.Object(os.environ.get("BUCKET"),f"{file_id}.parquet")
+        data = resource.Object(os.environ.get("BUCKET"), f"{file_id}.parquet")
         data.download_fileobj(buffer)
         df = pd.read_parquet(buffer, engine='pyarrow')
         return df
-
 
     def store_data(self, data: BytesIO) -> str:
         """
@@ -77,7 +74,6 @@ class StatsManager:
             sorted_channels[ch.name] = list(filtered_data.columns)
         return sorted_channels
 
-
     def get_channels(self, file_id: str, channel_type: List[ChannelType]) -> Dict[ChannelType, Any]:
         """
         Retrieve channels belonging to a certain channel type
@@ -97,7 +93,6 @@ class StatsManager:
             return sorted_channels
 
         return {ch.name: sorted_channels.get(ch.name, []) for ch in channel_type}
-
 
     def get_stats(self, file_id: str,
                   channel_ids: Union[List[str], None] = None,
@@ -155,7 +150,7 @@ class StatsManager:
         :rtype: Union[Tuple[datetime, datetime], Tuple[None, None]]
         """
 
-        if isinstance(start_date, datetime)  and isinstance(end_date, datetime):
+        if isinstance(start_date, datetime) and isinstance(end_date, datetime):
             return start_date, end_date
 
         if start_date is None and end_date is None:
@@ -233,7 +228,6 @@ class StatsManager:
             return data[(data.index >= start_date) & (data.index <= end_date)]
 
         return data
-
 
     def validate_column_names(self, data: pd.DataFrame, channel_ids: List[str] = None) -> List[str]:
         """
