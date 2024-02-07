@@ -2,7 +2,7 @@ name: Pylint
 
 on: 
   push:
-    branch-ignore: [ "main" ]
+    branches-ignore: [ "main" ]
 
 jobs:
   build:
