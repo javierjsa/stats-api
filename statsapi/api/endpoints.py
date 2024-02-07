@@ -91,7 +91,7 @@ async def upload_file(file: Annotated[bytes, File()]) -> FileId:
     try:
         data = BytesIO(file)
         file_id, stored = stats_manager.store_data(data)
-        return FileId(id=file_id, stores=stored)
+        return FileId(file_id=file_id, stored=stored)
     except StatsManagerException as error:
         raise HTTPException(status_code=error.code, detail=str(error))
     except Exception as error:
