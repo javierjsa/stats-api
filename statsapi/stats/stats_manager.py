@@ -61,7 +61,7 @@ class StatsManager:
             try:
                 bucket.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
                                   Key=f"{file_id}.parquet", ContentType='application/x-parquet')
-            except Exceptions as e:
+            except Exception as e:
                 raise StatsManagerException(e)
 
         return file_id, True
