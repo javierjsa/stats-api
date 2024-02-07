@@ -3,7 +3,7 @@ name: Docker Image PR
 on:
   workflow_run:
     workflows: ['Unittest']
-    types: [completed]
+    types: ['completed']
     branches: 
       - '/refs/heads/*'
       - '!master'
