@@ -33,30 +33,38 @@ class StatsManager:
 
         buffer = BytesIO()
         resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
-        data = resource.Object(os.environ.get("BUCKET"), f"{file_id}.parquet")
-        data.download_fileobj(buffer)
-        df = pd.read_parquet(buffer, engine='pyarrow')
-        return df
+        s3data = resource.Object(os.environ.get("BUCKET"), f"{file_id}.parquet")
+        s3data.download_fileobj(buffer)
+        dataframe = pd.read_parquet(buffer, engine='pyarrow')
+        return dataframe
 
-    def store_data(self, data: BytesIO) -> str:
+    def store_data(self, data: BytesIO) -> Tuple[str, bool]:
         """
-        Save data to storage backend
+        Save data to storage backend if it does not exist alreadt
 
         :param data: parquet data to be stored
         :type data: BytesIO
-        :return: file hash as a file identifier
-        :rtype: str
+        :return: file hash as a file identifier and whether file was saved or not
+        :rtype: str, bool
         """
 
         md5sum = md5(data.getbuffer())
         file_id = md5sum.hexdigest()
-        resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
-        bucket= resource.Bucket(os.environ.get("BUCKET"))
+        client = self.session.client("s3", endpoint_url=os.environ.get("ENDPOINT"))
+        #bucket= resource.Bucket(os.environ.get("BUCKET"))
         data.seek(0)
-        bucket.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
-                          Key=f"{file_id}.parquet", ContentType='application/x-parquet')
+        try:
+            client.head_object(Bucket=os.environ.get("BUCKET"), Key=file_id)
+            return file_id, False
+        except Exception as e:
+            print(f"{e}")
+            try:
+                client.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
+                                  Key=f"{file_id}.parquet", ContentType='application/x-parquet')
+            except Exception as e:
+                raise StatsManagerException(e)
 
-        return file_id
+        return file_id, True
 
     def sort_channels(self, data: pd.DataFrame) -> Dict[str, List[Any]]:
         """

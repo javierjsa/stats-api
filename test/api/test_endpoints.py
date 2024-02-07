@@ -294,3 +294,4 @@ class TestEndpoints(unittest.TestCase):
                 self.assertTrue(ch in self.channel_ids)
                 self.assertIsNone(stats['mean'])
                 self.assertIsNone(stats['std'])
+
