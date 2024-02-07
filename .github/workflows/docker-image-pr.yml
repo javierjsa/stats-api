@@ -4,7 +4,9 @@ on:
   workflow_run:
     workflows: [Unittest]
     types: [completed]
-    branches: ['!main']
+    branches: 
+      - '/refs/heads/*'
+      - '!master'
 
 jobs:
   build_and_push:
