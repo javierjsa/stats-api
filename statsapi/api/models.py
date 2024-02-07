@@ -11,11 +11,12 @@ from fastapi import status
 
 class FileId(BaseModel):
     """
-    File model with fields id and path
+    File model with fields id and stored. Field stored is true if file was saved to backend,
+    false if file alreadt existed
     """
 
-    id: str
-    path: str
+    file_id: str
+    stored: bool
 
 
 class ChannelType(Enum):
