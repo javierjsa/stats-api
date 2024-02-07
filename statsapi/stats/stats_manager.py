@@ -38,7 +38,7 @@ class StatsManager:
         dataframe = pd.read_parquet(buffer, engine='pyarrow')
         return dataframe
 
-    def store_data(self, data: BytesIO) -> Tuple(str, bool):
+    def store_data(self, data: BytesIO) -> Tuple[str, bool]:
         """
         Save data to storage backend if it does not exist alreadt
 
