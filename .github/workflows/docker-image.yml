@@ -1,15 +1,14 @@
 name: Docker Image CI
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_run:
+    workflows: [Unittest]
+    types: [completed]
+    branches: [main]
 
 jobs:
-
-  build:
-
+  build_and_push:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
