@@ -62,7 +62,6 @@ class StatsManager:
             except Exception as e:
                 raise StatsManagerException(e)
 
-
         return file_id, True
 
     def sort_channels(self, data: pd.DataFrame) -> Dict[str, List[Any]]:

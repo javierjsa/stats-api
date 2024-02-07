@@ -30,7 +30,7 @@ Fastapi application consisting of tree endpoints that works with parquet files c
 - ### /upload
     Upload a parquet file to an object storage backend. Files can only be uploaded once and receives an identifier based on the file hash.<br/><br/> 
     
-    **Receives**: Parquet file
+    **Receives**: Parquet filei.<br/>
     **Returns**: File identifier and a 'stored' field that shows whether the file has been already uploaded.
     
 
