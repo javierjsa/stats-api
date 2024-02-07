@@ -54,10 +54,8 @@ async def get_channel_stats(stats_request: Union[StatsRequest, None]) -> Dict[st
     - ### Should only start_date is specified, end_date is set to now.
     - ### Providing any nonexistent channel identifiers will raise an error
 
-    ### Receives: _StatsRequest_ model including an optional list of channels and
-    ### an optional date range.<br/>
-    ### Returns:  Dictionary of _Stats_ models including dictionary of dictionaries
-    ### with stats sorted by channel.
+    ### Receives: _StatsRequest_ model including an optional list of channels and an optional date range.<br/>
+    ### Returns:  Dictionary of _Stats_ models including dictionary of dictionaries with stats sorted by channel.
     """
 
     stats_manager = StatsManager()
@@ -82,8 +80,8 @@ async def get_channel_stats(stats_request: Union[StatsRequest, None]) -> Dict[st
 
 @router.post("/upload", status_code=status.HTTP_200_OK,
              summary="Upload parquet file",
-             response_description="File id in db",
-             tags=["Thumbnail"])
+             response_description="File id and path",
+             tags=["Upload file"])
 async def upload_file(file: Annotated[bytes, File()]) -> FileId:
     """
     Upload file to storage. Return file id and path
