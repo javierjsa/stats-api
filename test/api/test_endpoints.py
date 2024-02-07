@@ -1,10 +1,12 @@
 import os
 from os.path import dirname, abspath
+from io import BytesIO
 import unittest
 from unittest.mock import patch
 import pandas as pd
 from fastapi import status
 from fastapi.testclient import TestClient
+from botocore.exceptions import ClientError
 from statsapi.app import app
 from statsapi.stats.stats_manager import StatsManager
 

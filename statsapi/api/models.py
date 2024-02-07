@@ -88,7 +88,7 @@ class ChannelRequest(BaseModel):
         schema_extra = {
             "example": {
                 "file_id": "9c750d0955a60f00557b488b713f9320",
-                "channel_list": ["vel56.8", "std56.8"]
+                "channel_list": ["vel", "std"]
             }
         }
 

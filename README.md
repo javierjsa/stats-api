@@ -1,7 +1,10 @@
 [![Python application](https://github.com/javierjsa/stats-api/actions/workflows/python-app.yml/badge.svg)](https://github.com/javierjsa/stats-api/actions/workflows/python-app.yml)
 [![Pylint](https://github.com/javierjsa/stats-api/actions/workflows/pylint.yml/badge.svg)](https://github.com/javierjsa/stats-api/actions/workflows/pylint.yml)
 # <span style="color:green">Channel stats API
-Fastapi application consisting of two endpoints.
+Fastapi application consisting of tree endpoints that works with parquet files containing meteorological data obtained from differente sensors:
+- Upload a file, there is a sample in resources folder
+- Request available channels, providing a file identifier and optionally, a type of channel.
+- Request statistics for certains channels within a date range
 
 ## <span style="color:green">Endpoints
 
@@ -12,10 +15,10 @@ Fastapi application consisting of two endpoints.
     - Requesting a channels type outside allowed values will raise an error.
     - Duplicated channel types are filtered before processing.<br/><br/>
 
-    **Receives**: _ChannelRequest_ model with optional list of channel_type values.<br/>
+    **Receives**: _ChannelRequest_ model with a file identifier and an optional list of channel_type values.<br/>
     **Returns**: _Channels_ model with dictionary of available channels sorted by channel type.
 - ### /stats
-    Retrieve stats (mean and standard deviation) for requested channel identifiers.<br/><br/>
+    Retrieve stats (mean and standard deviation) for requested file identifier and channel identifiers.<br/><br/>
 
     - In case no channel is specified, stats for all channels are returned.
     - A date range may be provided, otherwise stats are computed for the whole time series.
@@ -24,16 +27,22 @@ Fastapi application consisting of two endpoints.
 
     **Receives**: _StatsRequest_ model including an optional list of channels and an optional date range.<br/>
     **Returns**:  Dictionary of _Stats_ models including dictionary of dictionaries with stats sorted by channel.
+- ### /upload
+    Upload a parquet file to an object storage backend. Files can only be uploaded once and receives an identifier based on the file hash.<br/><br/> 
+    
+    **Receives**: Parquet file
+    **Returns**: File identifier and a 'stored' field that shows whether the file has been already uploaded.
+    
 
 ## <span style="color:green">Docker image
 
 - ### Download image:</br>
       docker pull javierjsa/statsapi:latest
 
-- ### Run image:</br>
-      docker run -t --rm -p 8000:8000 javierjsa/statsapi:latest
+- ### Run docker compose:</br>
+      docker-compose -f docker-compose.yaml up
  
 - ### Access documentation:</br>
-      http://0.0.0.0:8000/docs
+      http://0.0.0.0/docs
 
 

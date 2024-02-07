@@ -51,18 +51,17 @@ class StatsManager:
         md5sum = md5(data.getbuffer())
         file_id = md5sum.hexdigest()
         client = self.session.client("s3", endpoint_url=os.environ.get("ENDPOINT"))
-        #bucket= resource.Bucket(os.environ.get("BUCKET"))
         data.seek(0)
         try:
-            client.head_object(Bucket=os.environ.get("BUCKET"), Key=file_id)
+            client.head_object(Bucket=os.environ.get("BUCKET"), Key=f"{file_id}.parquet")
             return file_id, False
-        except Exception as e:
-            print(f"{e}")
+        except Exception:
             try:
                 client.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
                                   Key=f"{file_id}.parquet", ContentType='application/x-parquet')
             except Exception as e:
                 raise StatsManagerException(e)
+
 
         return file_id, True
 
