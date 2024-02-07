@@ -54,7 +54,7 @@ class StatsManager:
         bucket= resource.Bucket(os.environ.get("BUCKET"))
         data.seek(0)
         try:
-            bucket.head_o/bject(Bucket=os.environ.get("BUKECT"), Key=file_id)
+            bucket.head_object(Bucket=os.environ.get("BUKECT"), Key=file_id)
             return file_id, False
         except Exception as e:
             print(f"{e}")
