@@ -53,7 +53,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             expected_json = {"vel": self.expected_channels["vel"]}
             response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320",
@@ -77,7 +77,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             expected_json = {"vel": self.expected_channels["vel"]}
             response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320",
@@ -94,7 +94,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320"},
                                         headers={'Content-Type': 'application/json'})
@@ -109,7 +109,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             channels = ["vel58.3", "std58.3"]
             response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
@@ -131,7 +131,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             channels = ["vel58.3", "std58.3"]
 
@@ -153,7 +153,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             channels = ["vel58.3", "std58.3"]
             response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
@@ -173,7 +173,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
                                                         "date_range": ["2019-05-27", "2019-07-27"]},
@@ -193,7 +193,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320"},
                                         headers={'Content-Type': 'application/json'})
@@ -211,7 +211,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
                                                         "channel_ids": ["vel58.3", "foo"]},
@@ -285,7 +285,7 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock_method:
+        with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
                                                         "channel_ids": ["vel58.3", "std58.3"],

@@ -18,28 +18,28 @@ class TestStats(unittest.TestCase):
         :return: None
         """
 
-        with patch.object(StatsManager, 'load_data') as mock:
+        with patch.object(StatsManager, '_load_data') as mock:
             mock.side_effect = Exception("Attempted to load data")
             _ = StatsManager()
 
-    def test_validate_dates(self) -> None:
+    def test__validate_dates(self) -> None:
         """
         Check valid combinations of start and end dates
         :return: None
         """
 
-        start_date, end_date = self.manager.validate_dates()
+        start_date, end_date = self.manager._validate_dates()
         self.assertIsNone(start_date)
         self.assertIsNone(end_date)
 
-        start_date, end_date = self.manager.validate_dates(start_date="2019-05-01")
+        start_date, end_date = self.manager._validate_dates(start_date="2019-05-01")
         self.assertEqual(type(start_date), datetime.datetime)
         self.assertEqual(type(end_date), datetime.datetime)
         now = datetime.datetime.now()
         self.assertEqual(now.date(), end_date.date())
         self.assertTrue(start_date < end_date)
 
-        start_date, end_date = self.manager.validate_dates(start_date="2019-05-01", end_date="2019-07-01")
+        start_date, end_date = self.manager._validate_dates(start_date="2019-05-01", end_date="2019-07-01")
         self.assertEqual(type(start_date), datetime.datetime)
         self.assertEqual(type(end_date), datetime.datetime)
         self.assertTrue(start_date < end_date)
@@ -50,8 +50,8 @@ class TestStats(unittest.TestCase):
         :return: None
         """
         with self.assertRaises(StatsManagerException):
-            _, _ = self.manager.validate_dates(end_date="2019-05-01")
+            _, _ = self.manager._validate_dates(end_date="2019-05-01")
         with self.assertRaises(StatsManagerException):
-            _, _ = self.manager.validate_dates(start_date="2019-07-01", end_date="2019-05-01")
+            _, _ = self.manager._validate_dates(start_date="2019-07-01", end_date="2019-05-01")
         with self.assertRaises(StatsManagerException):
-            _, _ = self.manager.validate_dates(start_date="20-07-01", end_date="20-05-01")
+            _, _ = self.manager._validate_dates(start_date="20-07-01", end_date="20-05-01")
