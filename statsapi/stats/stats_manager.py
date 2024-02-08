@@ -6,7 +6,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, EndpointConnectionError
 from statsapi.api.models import ChannelType
 from statsapi.stats.utils import ChannelTypeRegexp, StatsManagerException
 
@@ -123,6 +123,9 @@ class StatsManager:
             return dataframe
         except ClientError:
             raise StatsManagerException(503, "File identifier not available")
+        except EndpointConnectionError:
+            raise StatsManagerException(503, "Storage backend unavailable")
+
 
     def _sort_channels(self, data: pd.DataFrame) -> Dict[str, List[Any]]:
         """
