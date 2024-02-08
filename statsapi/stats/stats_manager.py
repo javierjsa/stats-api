@@ -21,65 +21,6 @@ class StatsManager:
                                      aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
                                      aws_session_token=None)
 
-    def load_data(self, file_id: str) -> pd.DataFrame:
-        """
-        Load available data from storae backend and sort channels per type. Store in class variable
-
-        :param file_id: file identifier
-        :type file_id: str
-        :return: requested data as a dataframe
-        :rtype: pd.Daraframe
-        """
-
-        buffer = BytesIO()
-        resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
-        s3data = resource.Object(os.environ.get("BUCKET"), f"{file_id}.parquet")
-        s3data.download_fileobj(buffer)
-        dataframe = pd.read_parquet(buffer, engine='pyarrow')
-        return dataframe
-
-    def store_data(self, data: BytesIO) -> Tuple[str, bool]:
-        """
-        Save data to storage backend if it does not exist alreadt
-
-        :param data: parquet data to be stored
-        :type data: BytesIO
-        :return: file hash as a file identifier and whether file was saved or not
-        :rtype: str, bool
-        """
-
-        md5sum = md5(data.getbuffer())
-        file_id = md5sum.hexdigest()
-        client = self.session.client("s3", endpoint_url=os.environ.get("ENDPOINT"))
-        data.seek(0)
-        try:
-            client.head_object(Bucket=os.environ.get("BUCKET"), Key=f"{file_id}.parquet")
-            return file_id, False
-        except Exception:
-            try:
-                client.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
-                                  Key=f"{file_id}.parquet", ContentType='application/x-parquet')
-            except Exception as e:
-                raise StatsManagerException(e)
-
-        return file_id, True
-
-    def sort_channels(self, data: pd.DataFrame) -> Dict[str, List[Any]]:
-        """
-        Sort available channels per channel type
-
-        :param data: Dataframe to extract channels from
-        :type data: pd.DataFrame
-        :return: channels sorted by ChannelType
-        :rtype: Dict[str, List[Any]]
-        """
-
-        sorted_channels = {}
-        for ch in ChannelTypeRegexp:
-            filtered_data = data.filter(regex=f"{ch.value}")
-            sorted_channels[ch.name] = list(filtered_data.columns)
-        return sorted_channels
-
     def get_channels(self, file_id: str, channel_type: List[ChannelType]) -> Dict[ChannelType, Any]:
         """
         Retrieve channels belonging to a certain channel type
@@ -92,8 +33,8 @@ class StatsManager:
         :rtype: Dict[ChannelType, Any]
         """
 
-        data = self.load_data(file_id)
-        sorted_channels = self.sort_channels(data)
+        data = self._load_data(file_id)
+        sorted_channels = self._sort_channels(data)
 
         if not channel_type:
             return sorted_channels
@@ -121,10 +62,10 @@ class StatsManager:
         :rtype: Dict[str, float]
         """
 
-        data = self.load_data(file_id)
-        channel_ids = self.validate_column_names(data, channel_ids)
+        data = self._load_data(file_id)
+        channel_ids = self._validate_column_names(data, channel_ids)
 
-        data = self.select_date_range(data, start_date, end_date)
+        data = self._select_date_range(data, start_date, end_date)
         data = data[channel_ids]
 
         mean = data.mean(skipna=True, numeric_only=True)
@@ -136,8 +77,67 @@ class StatsManager:
         stats = stats.to_dict('index')
         return stats
 
+    def store_data(self, data: BytesIO) -> Tuple[str, bool]:
+        """
+        Save data to storage backend if it does not exist alreadt
+
+        :param data: parquet data to be stored
+        :type data: BytesIO
+        :return: file hash as a file identifier and whether file was saved or not
+        :rtype: str, bool
+        """
+
+        md5sum = md5(data.getbuffer())
+        file_id = md5sum.hexdigest()
+        client = self.session.client("s3", endpoint_url=os.environ.get("ENDPOINT"))
+        data.seek(0)
+        try:
+            client.head_object(Bucket=os.environ.get("BUCKET"), Key=f"{file_id}.parquet")
+            return file_id, False
+        except Exception:
+            try:
+                client.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
+                                  Key=f"{file_id}.parquet", ContentType='application/x-parquet')
+            except Exception as e:
+                raise StatsManagerException(e)
+
+        return file_id, True
+
+    def _load_data(self, file_id: str) -> pd.DataFrame:
+        """
+        Load available data from storae backend and sort channels per type. Store in class variable
+
+        :param file_id: file identifier
+        :type file_id: str
+        :return: requested data as a dataframe
+        :rtype: pd.Daraframe
+        """
+
+        buffer = BytesIO()
+        resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
+        s3data = resource.Object(os.environ.get("BUCKET"), f"{file_id}.parquet")
+        s3data.download_fileobj(buffer)
+        dataframe = pd.read_parquet(buffer, engine='pyarrow')
+        return dataframe
+
+    def _sort_channels(self, data: pd.DataFrame) -> Dict[str, List[Any]]:
+        """
+        Sort available channels per channel type
+
+        :param data: Dataframe to extract channels from
+        :type data: pd.DataFrame
+        :return: channels sorted by ChannelType
+        :rtype: Dict[str, List[Any]]
+        """
+
+        sorted_channels = {}
+        for ch in ChannelTypeRegexp:
+            filtered_data = data.filter(regex=f"{ch.value}")
+            sorted_channels[ch.name] = list(filtered_data.columns)
+        return sorted_channels
+
     @staticmethod
-    def validate_dates(start_date: Union[str, datetime] = None,
+    def _validate_dates(start_date: Union[str, datetime] = None,
                        end_date: Union[str, datetime] = None) -> Union[Tuple[datetime, datetime], Tuple[None, None]]:
         """
         Convert date strings to datetime objects. Dates are validated in case date strings are received.
@@ -183,7 +183,7 @@ class StatsManager:
 
         return start_date, end_date
 
-    def compute_mean(self, data: pd.DataFrame, channel_id: str) -> pd.Series:
+    def _compute_mean(self, data: pd.DataFrame, channel_id: str) -> pd.Series:
         """
         Compute mean of channel identifier
 
@@ -198,7 +198,7 @@ class StatsManager:
         mean = data[channel_id].mean()
         return mean
 
-    def compute_std(self, data: pd.DataFrame, channel_id: str) -> pd.Series:
+    def _compute_std(self, data: pd.DataFrame, channel_id: str) -> pd.Series:
         """
         Compute standard deviation of channel identifier
 
@@ -213,7 +213,7 @@ class StatsManager:
         std = data[channel_id].std()
         return std
 
-    def select_date_range(self, data: pd.DataFrame,
+    def _select_date_range(self, data: pd.DataFrame,
                           start_date: datetime = None, end_date: datetime = None) -> pd.DataFrame:
         """
         Select date range from available data
@@ -228,14 +228,14 @@ class StatsManager:
         :rtype: pd.DataFrame
         """
 
-        start_date, end_date = self.validate_dates(start_date, end_date)
+        start_date, end_date = self._validate_dates(start_date, end_date)
 
         if start_date is not None and end_date is not None:
             return data[(data.index >= start_date) & (data.index <= end_date)]
 
         return data
 
-    def validate_column_names(self, data: pd.DataFrame, channel_ids: List[str] = None) -> List[str]:
+    def _validate_column_names(self, data: pd.DataFrame, channel_ids: List[str] = None) -> List[str]:
         """
         Check if list of provided channel identifiers is available. If any channel identifier is not available,
         an exception is raised.
