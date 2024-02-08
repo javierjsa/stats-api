@@ -1,5 +1,6 @@
 import datetime
 import unittest
+from warnings import deprecated
 from unittest.mock import patch
 from statsapi.stats.stats_manager import StatsManager
 from statsapi.stats.utils import StatsManagerException
@@ -12,6 +13,7 @@ class TestStats(unittest.TestCase):
 
         cls.manager = StatsManager()
 
+    @deprecated("This test needs to be updated")
     def test_data_loading(self) -> None:
         """
         Assert data is not loaded once a previous StatsManager instance exists
