@@ -6,6 +6,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import boto3
+from botocore.exceptions import ClientError
 from statsapi.api.models import ChannelType
 from statsapi.stats.utils import ChannelTypeRegexp, StatsManagerException
 
@@ -94,12 +95,12 @@ class StatsManager:
         try:
             client.head_object(Bucket=os.environ.get("BUCKET"), Key=f"{file_id}.parquet")
             return file_id, False
-        except Exception:
+        except ClientError:
             try:
                 client.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
                                   Key=f"{file_id}.parquet", ContentType='application/x-parquet')
-            except Exception as e:
-                raise StatsManagerException(e)
+            except Exception:
+                raise StatsManagerException("Unable to store data")
 
         return file_id, True
 
@@ -113,12 +114,15 @@ class StatsManager:
         :rtype: pd.Daraframe
         """
 
-        buffer = BytesIO()
-        resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
-        s3data = resource.Object(os.environ.get("BUCKET"), f"{file_id}.parquet")
-        s3data.download_fileobj(buffer)
-        dataframe = pd.read_parquet(buffer, engine='pyarrow')
-        return dataframe
+        try:
+            buffer = BytesIO()
+            resource = self.session.resource("s3", endpoint_url=os.environ.get("ENDPOINT"))
+            s3data = resource.Object(os.environ.get("BUCKET"), f"{file_id}.parquet")
+            s3data.download_fileobj(buffer)
+            dataframe = pd.read_parquet(buffer, engine='pyarrow')
+            return dataframe
+        except ClientError:
+            raise StatsManagerException("File identifier not available")
 
     def _sort_channels(self, data: pd.DataFrame) -> Dict[str, List[Any]]:
         """
