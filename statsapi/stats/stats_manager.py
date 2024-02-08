@@ -100,7 +100,7 @@ class StatsManager:
                 client.put_object(Body=data, Bucket=os.environ.get("BUCKET"),
                                   Key=f"{file_id}.parquet", ContentType='application/x-parquet')
             except Exception:
-                raise StatsManagerException("Unable to store data")
+                raise StatsManagerException(503, "Unable to store data")
 
         return file_id, True
 
@@ -122,7 +122,7 @@ class StatsManager:
             dataframe = pd.read_parquet(buffer, engine='pyarrow')
             return dataframe
         except ClientError:
-            raise StatsManagerException("File identifier not available")
+            raise StatsManagerException(503, "File identifier not available")
 
     def _sort_channels(self, data: pd.DataFrame) -> Dict[str, List[Any]]:
         """
