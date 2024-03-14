@@ -41,9 +41,9 @@ class TestEndpoints(unittest.TestCase):
         Assert error is raised if non-existent channel type is requested
         :return: None
         """
-
-        response = self.client.post("/channels", json={"channel_list": ["foo"]},
-                                    headers={'Content-Type': 'application/json'})
+        file_id = "9c750d0955a60f00557b488b713f9320"
+        response = self.client.get(f"/channels/{file_id}?channel_type=foo",
+                                        headers={'Content-Type': 'application/json'})
         self.assertEqual(response.json(), {'reason': 'Requested invalid channel type: foo'})
         self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
@@ -56,17 +56,17 @@ class TestEndpoints(unittest.TestCase):
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
             expected_json = {"vel": self.expected_channels["vel"]}
-            response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                           "channel_list": ["vel"]},
-                                                           headers={'Content-Type': 'application/json'})
+            file_id = "9c750d0955a60f00557b488b713f9320"
+            response = self.client.get(f"/channels/{file_id}?channel_type=vel",
+                                        headers={'Content-Type': 'application/json'})
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             received_json = response.json()
             self.assertEqual(received_json, expected_json)
 
             expected_json = {"std_dtr": self.expected_channels["std_dtr"]}
-            response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                           "channel_list": ["std_dtr"]},
+            response = self.client.get(f"/channels/{file_id}?channel_type=std_dtr",
                                         headers={'Content-Type': 'application/json'})
+
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             received_json = response.json()
             self.assertEqual(received_json, expected_json)
@@ -79,9 +79,10 @@ class TestEndpoints(unittest.TestCase):
 
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
+            file_id = "9c750d0955a60f00557b488b713f9320"
+            channel_list = ["vel", "vel"]
             expected_json = {"vel": self.expected_channels["vel"]}
-            response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                           "channel_list": ["vel", "vel"]},
+            response = self.client.get(f"/channels/{file_id}?channel_type={channel_list[0]}&channel_type={channel_list[1]}",
                                         headers={'Content-Type': 'application/json'})
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -96,7 +97,7 @@ class TestEndpoints(unittest.TestCase):
 
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
-            response = self.client.post("/channels", json={"file_id": "9c750d0955a60f00557b488b713f9320"},
+            response = self.client.get("/channels/9c750d0955a60f00557b488b713f9320",
                                         headers={'Content-Type': 'application/json'})
 
             received_json = response.json()
@@ -111,15 +112,16 @@ class TestEndpoints(unittest.TestCase):
 
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
-            channels = ["vel58.3", "std58.3"]
-            response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                        "channel_ids": ["vel58.3", "std58.3"],
-                                                        "date_range": ["2019-05-27", "2019-07-27"]},
+            file_id = "9c750d0955a60f00557b488b713f9320"
+            channel_ids = ["vel58.3", "std58.3"]
+            date_range = ["2019-05-27", "2019-07-27"]
+
+            response = self.client.get(f"/stats/{file_id}?channel_id={channel_ids[0]}&channel_id={channel_ids[1]}",
                                         headers={'Content-Type': 'application/json'})
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()
-            for ch in channels:
+            for ch in channel_ids:
                 self.assertTrue(ch in list(data.keys()))
                 stats = data[ch]
                 for val in ["mean", "std"]:
@@ -133,11 +135,11 @@ class TestEndpoints(unittest.TestCase):
 
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
+            file_id =  "9c750d0955a60f00557b488b713f9320"
             channels = ["vel58.3", "std58.3"]
+            date_range =  ["2019-05-27"]
 
-            response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                        "channel_ids": ["vel58.3", "std58.3"],
-                                                        "date_range": ["2019-05-27"]},
+            response = self.client.get(f"/stats/file_id={file_id}?start_date={date_range[0]}",
                                         headers={'Content-Type': 'application/json'})
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()
@@ -153,15 +155,17 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
+        file_id = "9c750d0955a60f00557b488b713f9320"
+        channel_ids = ["vel58.3", "std58.3"]
+
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
-            channels = ["vel58.3", "std58.3"]
-            response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                        "channel_ids": ["vel58.3", "std58.3"]},
+            response = self.client.get(f"/stats/{file_id}?channel_id={channel_ids[0]}&channel_id={channel_ids[1]}",
                                         headers={'Content-Type': 'application/json'})
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
-            for ch in channels:
+            for ch in channel_ids:
                 self.assertTrue(ch in list(data.keys()))
                 stats = data[ch]
                 for val in ["mean", "std"]:
@@ -173,10 +177,12 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
+        file_id = "9c750d0955a60f00557b488b713f9320"
+        date_range = ["2019-05-27", "2019-07-27"]
+
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
-            response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                        "date_range": ["2019-05-27", "2019-07-27"]},
+            response = self.client.get(f"/stats/file_id={file_id}?start_date={date_range[0]}&end_date={date_range[1]}",
                                         headers={'Content-Type': 'application/json'})
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -195,7 +201,7 @@ class TestEndpoints(unittest.TestCase):
 
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
-            response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320"},
+            response = self.client.get(f"/stats/9c750d0955a60f00557b488b713f9320",
                                         headers={'Content-Type': 'application/json'})
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()
@@ -205,16 +211,19 @@ class TestEndpoints(unittest.TestCase):
                 for val in ["mean", "std"]:
                     self.assertTrue(val in list(stats.keys()))
 
-    def test_get_stat_nonexistent_channel(self) -> None:
+    def test_get_stats_nonexistent_channel(self) -> None:
         """
         Request stats for non-existent channel
         :return: None
         """
 
+        file_id = "9c750d0955a60f00557b488b713f9320"
+        channel_ids = ["vel58.3", "foo"]
+
+
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
-            response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                        "channel_ids": ["vel58.3", "foo"]},
+            response = self.client.get(f"/stats/{file_id}?channel_id={channel_ids[0]}&channel_id={channel_ids[1]}",
                                         headers={'Content-Type': 'application/json'})
             self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
             self.assertEqual(response.text, '{"reason":"Channel_id foo is not available"}')
@@ -225,29 +234,18 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
+        file_id = "9c750d0955a60f00557b488b713f9320"
+        channel_ids = ["vel58.3", "std58.3"]
+        date_range = ["2019-07-27", "2019-05-27"]
+
+
         expected_text = '{"reason":"Start_date 2019-07-27 00:00:00 greater than end_date 2019-05-27 00:00:00"}'
-        response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                    "channel_ids": ["vel58.3", "std58.3"],
-                                                    "date_range": ["2019-07-27", "2019-05-27"]},
-                                    headers={'Content-Type': 'application/json'})
+        response = self.client.get(f"/stats/{file_id}?channel_id={channel_ids[0]}&channel_id={channel_ids[1]}&start_date={date_range[0]}&end_date={date_range[1]}",
+                                        headers={'Content-Type': 'application/json'})
 
         self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertEqual(response.text, expected_text)
 
-    def test_get_stats_malformed_date_range(self) -> None:
-        """
-        Request stats with date range including more than two date strings
-        :return: None
-        """
-
-        expected_text = '{"reason":"Malformed date range, length larger than two"}'
-        response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                    "channel_ids": ["vel58.3", "std58.3"],
-                                                    "date_range": ["2019-07-27", "2019-05-27", "2019-06-01"]},
-                                    headers={'Content-Type': 'application/json'})
-
-        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
-        self.assertEqual(response.text, expected_text)
 
     def test_get_stats_malformed_start_date(self) -> None:
         """
@@ -255,11 +253,14 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
+        file_id = "9c750d0955a60f00557b488b713f9320"
+        channel_ids = ["vel58.3", "std58.3"]
+        date_range = ["2019-07", "2019-07-01"]
+
         expected_text = '{"reason":"Invalid start_date: 2019-07"}'
-        response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                    "channel_ids": ["vel58.3", "std58.3"],
-                                                    "date_range": ["2019-07", "2019-05-27"]},
-                                    headers={'Content-Type': 'application/json'})
+        response = self.client.get(f"/stats/{file_id}?channel_id={channel_ids[0]}&channel_id={channel_ids[1]}&start_date={date_range[0]}&end_date={date_range[1]}",
+                                        headers={'Content-Type': 'application/json'})
+
 
         self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertEqual(response.text, expected_text)
@@ -270,11 +271,13 @@ class TestEndpoints(unittest.TestCase):
         :return: None
         """
 
+        file_id = "9c750d0955a60f00557b488b713f9320"
+        channel_ids = ["vel58.3", "std58.3"]
+        date_range = ["2019-07-01", "2019-07"]
+
         expected_text = '{"reason":"Invalid end_date: 2019-07"}'
-        response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                    "channel_ids": ["vel58.3", "std58.3"],
-                                                    "date_range": ["2019-07-01", "2019-07"]},
-                                    headers={'Content-Type': 'application/json'})
+        response = self.client.get(f"/stats/{file_id}?channel_id={channel_ids[0]}&channel_id={channel_ids[1]}&start_date={date_range[0]}&end_date={date_range[1]}",
+                                        headers={'Content-Type': 'application/json'})
 
         self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertEqual(response.text, expected_text)
@@ -287,9 +290,12 @@ class TestEndpoints(unittest.TestCase):
 
         with patch.object(StatsManager, '_load_data') as mock_method:
             mock_method.return_value = self.data
-            response = self.client.post("/stats", json={"file_id": "9c750d0955a60f00557b488b713f9320",
-                                                        "channel_ids": ["vel58.3", "std58.3"],
-                                                        "date_range": ["1900-05-27", "1900-05-27"]},
+
+            file_id = "9c750d0955a60f00557b488b713f9320"
+            channel_ids = ["vel58.3", "std58.3"]
+            date_range = ["1900-05-27", "1900-05-27"]
+
+            response = self.client.get(f"/stats/{file_id}?channel_id={channel_ids[0]}&channel_id={channel_ids[1]}&start_date={date_range[0]}&end_date={date_range[1]}",
                                         headers={'Content-Type': 'application/json'})
             data = response.json()
             for ch, stats in data.items():

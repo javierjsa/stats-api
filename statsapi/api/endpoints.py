@@ -1,7 +1,7 @@
-from typing import Dict, Union
+from typing import Dict, Union, List
 from io import BytesIO
 from typing_extensions import Annotated
-from fastapi import APIRouter, status, File
+from fastapi import APIRouter, status, File, Query
 from fastapi.exceptions import HTTPException
 from statsapi.api.models import (ChannelRequest, Channels,
                                  StatsRequest, Stats, FileId)
@@ -12,14 +12,14 @@ from statsapi.stats.utils import StatsManagerException
 router = APIRouter()
 
 
-@router.post("/channels",
+@router.get("/channels/{file_id}",
              response_model=Channels,
              status_code=status.HTTP_200_OK,
              response_model_exclude_unset=True,
              summary="Retrieve available channels identifiers per type",
              response_description="JSON dictionary of channel names sorted by type",
              tags=["List channels"])
-async def get_channels(channel_request: Union[ChannelRequest, None]):
+async def get_channels(file_id: str, channel_type: Annotated[Union[List[str], None], Query()] = None):
     """
     ### Retrieve available channel identifiers per type.<br/>
     - ### Allowed channel types are: vel, std, std_dtr, temp, hum, press, dir, sdir.<br/>
@@ -32,20 +32,23 @@ async def get_channels(channel_request: Union[ChannelRequest, None]):
 
     stats_manager = StatsManager()
     try:
+        channel_request = ChannelRequest(file_id=file_id, channel_list=channel_type)
         channels = stats_manager.get_channels(channel_request.file_id,
                                               list(channel_request.channel_list))
         return Channels(**channels)
     except StatsManagerException as error:
         raise HTTPException(status_code=error.code, detail=str(error))
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"reason": error.errors()[0]['msg']})
     except Exception as error:
         raise HTTPException(status_code=503, detail=f"Unexpected error: {str(error)}")
 
 
-@router.post("/stats", status_code=status.HTTP_200_OK,
+@router.get("/stats/{file_id}", status_code=status.HTTP_200_OK,
              summary="Retrieve stats for provided channel identifiers within date range",
              response_description="JSON dictionary of channel names sorted by type",
              tags=["Retrieve channel stats"])
-async def get_channel_stats(stats_request: Union[StatsRequest, None]) -> Dict[str, Stats]:
+async def get_channel_stats(file_id: str, channel_id: Annotated[Union[List[str], None], Query()] = None, start_date=None, end_date=None) -> Dict[str, Stats]:
     """
     ### Retrieve stats (mean and standard deviation) for requested channel identifiers.
 
@@ -60,13 +63,17 @@ async def get_channel_stats(stats_request: Union[StatsRequest, None]) -> Dict[st
 
     stats_manager = StatsManager()
     try:
-        data = stats_request.dict()
+        data = StatsRequest(file_id= file_id,
+                            date_range=[start_date, end_date],
+                            channel_ids=channel_id).dict()
         stats = stats_manager.get_stats(file_id=data['file_id'],
                                         channel_ids=data['channel_ids'],
                                         start_date=data['date_range'][0],
                                         end_date=data['date_range'][1])
     except StatsManagerException as error:
-        raise HTTPException(status_code=error.code, detail={"reason": str(error)})
+        raise HTTPException(status_code=error.status_code, detail={"reason": error.message})
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"reason": error.errors()[0]['msg']})
     except Exception:
         import traceback
         raise HTTPException(status_code=503,

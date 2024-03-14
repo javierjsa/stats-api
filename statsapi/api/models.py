@@ -95,12 +95,13 @@ class ChannelRequest(BaseModel):
     @validator('channel_list', pre=True, always=False)
     def check_channel_list(cls, channel_list):
 
+        if not channel_list:
+            channel_list = []
         channel_list = list(set(channel_list))
 
         for ch in channel_list:
             if ch not in [cha.value for cha in ChannelType]:
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                    detail={"reason": f"Requested invalid channel type: {ch}"})
+                raise ValueError(f"Requested invalid channel type: {ch}")
 
         return channel_list
 
@@ -125,7 +126,8 @@ class StatsRequest(BaseModel):
 
     @validator('channel_ids', pre=True, always=False)
     def check_channel_ids(cls, channel_ids):
-
+        if channel_ids == None:
+            return []
         return list(set(channel_ids))
 
     @validator('date_range', pre=False, always=False)
@@ -145,26 +147,22 @@ class StatsRequest(BaseModel):
             return start_date, end_date
 
         if start_date is None and end_date is not None:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail={'reason': 'Cannot provide end_date without start_date'})
+            raise ValueError("Cannot provide end_date without start_date")
 
         if end_date is not None:
             try:
                 end_date = datetime.strptime(f"{end_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
-            except ValueError:
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                    detail={'reason': f'Invalid end_date: {end_date}'})
+            except ValueError as error:
+                raise ValueError(f"Invalid end_date: {end_date}")
         else:
             end_date = datetime.now()
 
         try:
             start_date = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail={'reason': f'Invalid start_date: {start_date}'})
+            raise ValueError(f"Invalid start_date: {start_date}")
 
         if start_date > end_date:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail={'reason': f"Start_date {start_date} greater than end_date {end_date}"})
+            raise ValueError(f"Start_date {start_date} greater than end_date {end_date}")
 
         return start_date, end_date
