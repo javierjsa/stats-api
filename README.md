@@ -9,7 +9,7 @@ Fastapi application that works with parquet files containing meteorological data
 ## <span style="color:green">Endpoints
 
 
-- ### /channels  
+- ### /channels/{file_id}  
     Retrieve available channel identifiers per type.<br/><br/>
     - Allowed channel types are: vel, std, std_dtr, temp, hum, press, dir, sdir.<br/>
     - Requesting a channel type outside allowed values will raise an error.
@@ -17,7 +17,7 @@ Fastapi application that works with parquet files containing meteorological data
 
     **Receives**: _ChannelRequest_ model with a file identifier and an optional list of channel_type values.<br/>
     **Returns**: _Channels_ model with dictionary of available channels sorted by channel type.
-- ### /stats
+- ### /stats/{file_id}
     Retrieve stats (mean and standard deviation) for requested file identifier and channel identifiers.<br/><br/>
 
     - In case no channel is specified, stats for all channels are returned.

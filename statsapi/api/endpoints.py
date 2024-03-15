@@ -26,7 +26,7 @@ async def get_channels(file_id: str, channel_type: Annotated[Union[List[str], No
     - ### Requesting a channels type outside allowed values will raise an error.
     - ### Duplicated channel types are filtered before processing.
 
-    ### Receives: _ChannelRequest_ model with optional list of channel_type values.<br/>
+    ### Receives: _file_id_ model with optional list of channel_type values.<br/>
     ### Returns: _Channels_ model with dictionary of available channels sorted by channel type.
     """
 
@@ -57,7 +57,7 @@ async def get_channel_stats(file_id: str, channel_id: Annotated[Union[List[str],
     - ### Should only start_date is specified, end_date is set to now.
     - ### Providing any nonexistent channel identifiers will raise an error
 
-    ### Receives: _StatsRequest_ model including an optional list of channels and an optional date range.<br/>
+    ### Receives: _file_id_ model including an optional list of channels and an optional start and end date.<br/>
     ### Returns:  Dictionary of _Stats_ models including dictionary of dictionaries with stats sorted by channel.
     """
 
