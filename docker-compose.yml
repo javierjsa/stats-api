@@ -8,8 +8,37 @@ services:
       - .env
     volumes:
       - ./statsapi:/root/statsapi/statsapi
+    networks:          
+      mysql-network:
+        aliases:
+          - fastapi          
+        ipv4_address: 172.25.0.4
     depends_on:
-      - minio
+      minio:
+          condition: service_started
+      mysql:
+          condition: service_started
+  mysql:
+    container_name: mysql
+    image: mysql/mysql-server:latest          
+    pull_policy: if_not_present
+    volumes:
+      - type: volume
+        source: mysql-stats
+        target: /var/lib/mysql
+    ports:
+      - target: 3306
+        published: 3306
+        host_ip: 0.0.0.0
+        protocol: tcp        
+    networks:          
+      mysql-network:
+        aliases:
+          - db          
+        ipv4_address: 172.25.0.2
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      MYSQL_ROOT_HOST: "%"
   minio:
     image: minio/minio
     ports:
@@ -20,13 +49,21 @@ services:
     env_file:
       - .env
     command: server /data
-
+    networks:          
+      mysql-network:
+        aliases:
+          - minio          
+        ipv4_address: 172.25.0.3
   createbuckets:
     image: minio/mc
     depends_on:
       - minio
     env_file:
       - .env
+    networks:          
+      mysql-network:
+        aliases:
+          - create  
     entrypoint: >
       /bin/sh -c " sleep 10;
       /usr/bin/mc alias set minio-local http://minio:9000 minio minio123;
@@ -37,5 +74,15 @@ services:
       exit 0;
       "
 volumes:
-  datastore:
-    name: datastore
+  mysql-stats:
+    name: mysql-stats
+    external: False   
+networks:
+  mysql-network:        
+    name: mysql-network
+    internal: False
+    external: False
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.25.0.0/24"

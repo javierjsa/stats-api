@@ -57,7 +57,7 @@ async def get_channel_stats(file_id: str, channel_id: Annotated[Union[List[str],
     - ### Should only start_date is specified, end_date is set to now.
     - ### Providing any nonexistent channel identifiers will raise an error
 
-    ### Receives: _file_id_ model including an optional list of channels and an optional start and end date.<br/>
+    ### Receives: _file_id_ model including an optional list of channels and an optional start and end dated .d.<br/>
     ### Returns:  Dictionary of _Stats_ models including dictionary of dictionaries with stats sorted by channel.
     """
 

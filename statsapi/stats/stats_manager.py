@@ -6,6 +6,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import boto3
+import mysql.connector
 from botocore.exceptions import ClientError, EndpointConnectionError
 from statsapi.api.models import ChannelType
 from statsapi.stats.utils import ChannelTypeRegexp, StatsManagerException
@@ -21,6 +22,10 @@ class StatsManager:
         self.session = boto3.Session(aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
                                      aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
                                      aws_session_token=None)
+        
+        self.connection = mysql.connector.connect(host="db",
+                                                  user="app",
+                                                  password="password")
 
     def get_channels(self, file_id: str, channel_type: List[ChannelType]) -> Dict[ChannelType, Any]:
         """
@@ -80,7 +85,7 @@ class StatsManager:
 
     def store_data(self, data: BytesIO) -> Tuple[str, bool]:
         """
-        Save data to storage backend if it does not exist alreadt
+        Save data to storage backend if it does not exist already
 
         :param data: parquet data to be stored
         :type data: BytesIO
@@ -90,6 +95,8 @@ class StatsManager:
 
         md5sum = md5(data.getbuffer())
         file_id = md5sum.hexdigest()
+        cursor = self.connection.cursor()
+        data = cursor(f"SELECT * FROM application.files WHERE file_id={file_id}")
         client = self.session.client("s3", endpoint_url=os.environ.get("ENDPOINT"))
         data.seek(0)
         try:
